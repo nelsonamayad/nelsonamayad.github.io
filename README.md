@@ -1,5 +1,5 @@
-# Receta simple
+# Recetas electorales
 
-[Preparado en R markdown](https://nelsonamayad.github.io/receta), va un workflow para estimar un modelo bayesiano muy simple que sigue las pocas encuestas de intencion de voto. Cualquiera que quiera lo puede replicar completo.
+*Simple*: [Preparado en R markdown](https://nelsonamayad.github.io/receta), va un workflow para estimar un modelo bayesiano muy simple que sigue las pocas encuestas de intencion de voto. Cualquiera que quiera lo puede replicar completo.
 
-Más cosas en el horno.
+Más recetas en el horno.
