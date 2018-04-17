@@ -1,5 +1,5 @@
 ---
-title: "Plato, cocina, receta, ingredientes"
+title: "Plato, cocina, receta, ingredientes #1"
 subtitle: "Un modelo simple para las encuestas de intención de voto"
 author: "Nelson Amaya"
 output: 
@@ -11,7 +11,7 @@ Twitter: [`@nelsonamayad`](https://twitter.com/NelsonAmayaD)
 <br>
 Publicación: **17-04-2018**
 <br>
-Última actualización: **17-04-2018**
+Última actualización: **18-04-2018**
 <br>
 <br>
 ```{r setup, include=FALSE}
@@ -22,7 +22,7 @@ knitr::opts_chunk$set(echo = TRUE)
 - John Tukey
 <br>
 <br>
-Este es un juguete simple para las pocas encuestas de intención de voto que se hacen sobre las elecciones presidenciales de Colombia en 2018. Combina tres cosas chéveres: estadística bayesiana, reproducibilidad y computación open-source.
+Este es un juguete simple para las pocas encuestas de intención de voto que se hacen sobre las elecciones presidenciales de Colombia en 2018. Combina tres cosas chéveres: estadística bayesiana, reproducibilidad y computación open-source. Las tendencias en las encuestas se consultan mejor [acá](https://nelsonamayad.shinyapps.io/col2018_tend/).
 
 Tiene dos limitaciones grandes: no modela la determinación simultánea de la votación para todos los candidatos, ni el sesgo de respuesta de las encuestas. De cualquier forma, acá se pone todo sobre la mesa. Las críticas constructivas, bienvenidas.
 
@@ -36,7 +36,7 @@ Buen provecho.
 
 ## Plato
 <br>
-Estos son los resultados del modelo. Son promedios de la distribución posterior estimada para cada candidato, así como el intervalo HPDI (higher posterior density interval) de 90% sobre ese parámetro. Para tener una referencia, el resultado se compara con dos promedios simples: uno sobre las 18 encuestas disponibles a la fecha que se han hecho durante 2018, y otro sobre las 7 encuestas que se han hecho después de las elecciones legislativas del 11 de marzo.
+Estos son los resultados del modelo. Son promedios de la distribución posterior estimada para cada candidato, así como los intervalos HPD (higher posterior density) de 90% sobre esos parámetros. Para tener una referencia, el resultado se compara con dos promedios simples: uno sobre las 18 encuestas disponibles a la fecha que se han hecho durante 2018, y otro sobre las 7 encuestas que se han hecho después de las elecciones legislativas del 11 de marzo.
 
 Los intervalos son amplios; difícil algo diferente con tan pocas encuestas. Conforme salgan más encuestas, espero que el intervalo se reduzca.
 
@@ -88,7 +88,7 @@ Antes de las consultas del 11 de marzo, y de la adhesión de Juan Carlos Pinzón
 
 #### *Encuestas*
 
-Los datos básicos de las encuestas se pueden importar desde GitHub con RCurl. Las tendencias en las encuestas se ven mejor [acá](https://nelsonamayad.shinyapps.io/col2018_tend/).
+Los datos básicos de las encuestas se pueden importar desde GitHub con RCurl.
 
 ``` {r, echo = T}
 library(RCurl)
@@ -127,14 +127,12 @@ $$\pi_{candidato,t} \sim Normal(\pi_{candidato,t-1}, \sigma_{candidato,t-1})$$
 Como nadie es adivino para saber esas preferencias, solo se observan mediciones ruidosas de esa relación: las encuestas de intención de voto. Aunque no se puede conocer la proporción de votos que recibirá cada candidato antes del día de las elecciones, esa proporción es una función de la proporción de intención de voto $\lambda$ que hayan capturado las encuestas que se hayan realizado antes de esa fecha.  
 
 $$\pi_{candidato,t-1} \sim Normal(\lambda_{candidato,t-1}, \sigma_{candidato,t-1})$$
-La proporción de votos para cada candidato se aproxima mediante un modelo lineal sobre las siguientes características de las encuestas: 1) el tamaño de la muestra de cada encuesta (*n*), 2) el márgen de error de la encuesta (*e*), 3) los días que pasaron entre la encuesta y la estimación (*d*), 4) una dummy para el tipo de encuesta (telefónica o presencial) (*tipo*). Además, se incluyen efectos aleatorios por encuestadora que permiten incorporar la variación a ese nivel.
+La proporción de votos para cada candidato se aproxima mediante un modelo lineal sobre las siguientes características de las encuestas: 1) el tamaño de la muestra de cada encuesta (*m*), 2) el márgen de error de la encuesta (*e*), 3) los días que pasaron entre la encuesta y la estimación (*d*), 4) una dummy para el tipo de encuesta (telefónica o presencial) (*tipo*). Además, se incluyen efectos aleatorios por encuestadora que permiten incorporar la variación a ese nivel.
 
 ***
 ## Preparación
 <br>
 Este es el modelo completo, con los priors para cada parámetro. Los únicos priors informados son los que determinan el parámetro que captura el promedio y desviación estándar de cada candidato, y estos se actualizan con cada estimación del modelo cuando sale una nueva encuesta.
-
-#### *Modelo*
 
 $$\small \lambda_{candidato,t} \sim Normal(\mu_{candidato,t},\sigma_{candidato,t})$$
 $$\small \mu_{candidato,t} = \alpha_{t}+\alpha_{encuestadora}+\beta_1*m+\beta_2*e+\beta_3*d+\beta_4*tipo $$
@@ -251,14 +249,35 @@ fajardo_fit <- stan(file='fajardo.stan',data=list(N=7,N_encuestadora=6,int_voto=
 iter=4000,chains=4)
 ```
 <br>
-A pesar de las divergencias, el modelo converge rápido: es muy simple y tiene pocas observaciones. Para inspeccionarlo, diagnosticar el muestreo, ver los coeficientes y visualizar contrafactuales simulados: [shinystan](https://github.com/stan-dev/shinystan). 
+A pesar de las divergencias iniciales, el modelo converge rápido para todos los candidatos. Al fin y al cabo es muy simple y tiene pocas observaciones. 
 <br>
-``` {r, echoe=FALSE}
-library(shinystan)
-launch_shinystan(fajardo_fit)
+<br>
+Por sugerencia de [`@infrahumano`](https://twitter.com/infrahumano), incluyo dos gráficas antes de ir a [shinystan](https://github.com/stan-dev/shinystan): trace plot con [bayesplot](http://mc-stan.org/bayesplot/index.html) para ver cómo se comportaron las 4 cadenas en los parámetros clave, y una comparación a la carrera entre el promedio de cada parámetro y su valor observado.
+<br>
+``` {r, echo=FALSE}
+library(bayesplot)
+color_scheme_set("green")
+
+# Crear matriz de muestras de la distribucion posterior
+posterior <- as.matrix(fajardo_fit)
+
+# Trace plot para los parametros de interes
+mcmc_trace(posterior,pars=c("m[1]","m[2]","m[3]","m[4]","m[5]","m[6]","m[7]"))
+
+# Parámetros vs Observados
+par <- posterior %>% as.tibble() %>% select(15:21) %>% summarize_all(funs(mean)) %>% t()
+obs <- tibble(int_voto = sf$int_voto,
+              n = seq(from=1,to=7,by=1))
+par_obs <- cbind(par,obs)
+ggplot(par_obs, aes(x=n))+
+  geom_point(aes(y=int_voto),color="green4")+
+  geom_text(aes(y=int_voto,label="obs"),color="green4",hjust=-0.3)+
+  geom_point(aes(y=par),color="red4")+
+  geom_text(aes(y=par, label="par"),color="red4",hjust=-0.3)+
+  theme_classic()+labs(y="intencion de voto",x="")+scale_x_continuous(breaks=c(1,2,3,4,5,6,7))
 ```
 <br>
-Para cerrar, los parámetros con [bayesplot](https://cran.r-project.org/web/packages/bayesplot/index.html)   
+Ahora un resumen de todos los parámetros del modelo:  
 <br>
 ``` {r}
 library(bayesplot)
@@ -266,13 +285,20 @@ posterior <- as.array(fajardo_fit)
 color_scheme_set("green")
 mcmc_intervals(posterior,prob=0.9,prob_outer = 0.99,point_est="mean")
 ```
+<br>
+<br>
+Para cerrar, se pueden inspeccionar otras características del modelo, diagnosticar otras partes del muestreo, ver los coeficientes y visualizar contrafactuales simulados con [shinystan](https://github.com/stan-dev/shinystan).
+<br>
+<br>
+``` {r, echoe=FALSE}
+library(shinystan)
+launch_shinystan(fajardo_fit)
+```
 
 ***
-
 ## Algunas referencias en desorden
 <br>
-
-McElreath, R. (2015). [Statistical Rethinking](http://xcelab.net/rm/statistical-rethinking/) Texts in Statistical Science.
+McElreath, R. (2015). [Statistical Rethinking](http://xcelab.net/rm/statistical-rethinking/). Texts in Statistical Science.
 <br>
 <br>
 Gelman, A., Carlin, J. B., Stern, H. S., Dunson, D. B., Vehtari, A., & Rubin, D. B. (2014). Bayesian data analysis. Boca Raton, FL: CRC press.
