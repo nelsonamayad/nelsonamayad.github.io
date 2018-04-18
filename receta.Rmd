@@ -140,8 +140,8 @@ $$\small\alpha_{t} \sim Normal(\mu_{candidato},\sigma_{candidato}) $$
 $$\small\beta_1,\beta_2,\beta_3,\beta_4 \sim Normal(0,10) $$
 $$\small\beta_{encuestadora} \sim Normal(\mu, \sigma) $$
 $$\small\mu \sim Normal(0,10) $$
-$$\small\sigma \sim HalfCauchy(0,2) $$
-$$\small\sigma_{candidato} \sim HalfCauchy(0,2) $$
+$$\small\sigma \sim HalfCauchy(0,5) $$
+$$\small\sigma_{candidato} \sim HalfCauchy(0,5) $$
 
 #### *Alistamiento de los datos*
 
