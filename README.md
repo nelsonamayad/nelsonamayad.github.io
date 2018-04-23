@@ -12,7 +12,7 @@ Hay otra posibilidad, otra explicación a la posición de LSV. Según Nate Silve
 
 Me pareció insoportable la vanidad de esa respuesta y desde que la leí comencé a preparar una alternativa: un menú completamente transparente, estadísticamente técnico, replicable y preparado con software open-source para hacerle seguimiento a las encuestas. La idea es llenar un espacio, bueno, vacío: reconocer que en las encuestas puede haber información valiosa, que mirarlas requiere un lente estadístico y que sólo en conjunto se pueden entender qué valor tienen, cualquiera que sea.
 
-Las encuestas son la única alternativa a la intuición. Tienen errores, algunos explícitos y otros implícitos. Usan diferentes metodologías y estrategias muestrales, unas mejores que otras. Algunas revelan la tasa de respuesta; otras se la guardan. Hay muchas razones para cuestionar, incluso desconfiar, de las encuestas, pero hay más razones para desconfiar de analistas y columnistas: a la carreta casi nunca se le lleva contabilidad.
+Las encuestas son la única alternativa a la intuición. Tienen errores, algunos explícitos y otros implícitos. Usan diferentes metodologías y estrategias muestrales, unas mejores que otras. Algunas revelan la tasa de respuesta; otras se la guardan. Hay muchas razones para cuestionar, incluso desconfiar, de las encuestas. Pero hay más razones para desconfiar de analistas y columnistas: a la carreta casi nunca se le lleva contabilidad.
 
 Así que aquí va el menú, que se mejorará tanto como sea posible. Ahora mismo hay más recetas en el horno. Todas las recetas dan acceso directo a los datos, supuestos, modelos, estimación y resultados. 
 
