@@ -1,8 +1,11 @@
-# Recetas electorales
-
-*Por: Nelson Amaya*
-
-*2018-04-24*
+---
+title: "Recetas electorales"
+author: "Nelson Amaya"
+output: 
+  html_document:
+      theme: readable
+---
+*Última actualización: 2018-04-24*
 
 ¿Qué se puede aprender de las encuestas de intención de voto? 
 
