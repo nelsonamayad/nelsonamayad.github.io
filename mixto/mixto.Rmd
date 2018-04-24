@@ -389,6 +389,7 @@ McElreath, R. (2015). [Statistical Rethinking](http://xcelab.net/rm/statistical-
 <br>
 McElreath, R. ["Multilevel Regression as Default"](http://elevanth.org/blog/2017/08/24/multilevel-regression-as-default/)
 <br>
+<br>
 Gelman, A. ["Multilevel (Hierarchical) Modeling:
 What It Can and Cannot Do"](http://www.stat.columbia.edu/~gelman/research/published/multi2.pdf).
 <br>
