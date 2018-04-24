@@ -2,7 +2,8 @@
 
 *Por: Nelson Amaya*
 
-*2018-04-24*
+*Última actualización: 2018-04-24*
+
 
 1. [*Entrada*](https://nelsonamayad.shinyapps.io/col2018_tend/): Applicación para ver las tendencias para cada candidato, en todas las encuestas públicamente disponibles. Hecha con [Shinyapps](https://www.shinyapps.io/).
 
