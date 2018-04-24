@@ -1,7 +1,5 @@
 # Recetas electorales
 
-*Por: Nelson Amaya*
-
 *Última actualización: 2018-04-24*
 
 
