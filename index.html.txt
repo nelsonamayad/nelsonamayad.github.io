@@ -1,1 +1,1 @@
-<meta http-equiv="refresh" content="0; url=./receta.html" />
+<meta http-equiv="refresh" content="0; url=./recetas_electorales.html" />
