@@ -1,6 +1,6 @@
 # Recetas electorales
 
-*Última actualización: 2018-04-24*
+*Última actualización: 2018-04-26*
 
 
 1. [_**Entrada**_](https://nelsonamayad.shinyapps.io/col2018_tend/): Applicación para ver las tendencias para cada candidato, en todas las encuestas públicamente disponibles. Preparada con [Shinyapps](https://www.shinyapps.io/).
