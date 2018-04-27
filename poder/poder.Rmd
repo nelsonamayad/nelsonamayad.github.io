@@ -1,0 +1,530 @@
+---
+title: "Aperitivo"
+subtitle: "Poder estadístico de las encuestas"
+author: "Nelson Amaya"
+output: 
+  html_document:
+      theme: readable
+      code_folding: hide
+---
+[`@nelsonamayad`](https://twitter.com/NelsonAmayaD)
+<br>
+<br>
+*Última actualizacion:* 2018-04-27
+<br>
+- Encuestas totales: *37*
+<br>
+- Encuestas durante 2018: *22*
+<br>
+- Encuestas después de las elecciones legislativas: *10*
+<br>
+
+***
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## ¿Qué es esto?
+
+Una encuesta con bajo poder no es capaz de identificar diferencias estadísticamente significativas entre la intención de voto de los candidatos que busca medir. Puede, incluso, develar efectos o tendencias que realmente no están ahí.
+
+Este es un intento, imperfecto, de estimar el poder estadístico de las encuestas de intención de voto. Es imperfecto porque se hace sin conocer en detalle el diseño muestral de las encuestas. Limonada, porque no hay sino limones.
+
+## ¿Qué es eso de *poder estadístico*?
+
+El poder es una parte fundamental de la estadística frecuentista: es lo que permite distinguir una señal del ruido. Algo concreto de la carreta, o de la casualidad.
+
+_**El poder no es el márgen de error!**_
+
+Representa la probabilidad de que un test estadístico detecte un efecto cuando ese efecto realmente existe. Así, cuando un test tiene bajo poder, no es capaz de identificar o detectar lo que pretende. Cuando un test tiene bajo poder, puede confundir el ruido con la señal; si eso se hace con suficiente frecuencia, [puede acabar con una disciplina completa](http://science.sciencemag.org/content/349/6251/aac4716.full).
+ 
+Para analizar el poder, aunque depende de la situación específica, se necesitan 4 ingredientes:
+
+- El tamaño de una muestra ($n$)
+- El nivel de significancia, o probabilidad de falsos positivos ($\alpha$) 
+- El poder, o probabilidad de un falso negativo ($\beta$) 
+- El tamaño del efecto ($d$). Para un experimento aleatorio, por ejemplo, $d$=($\mu_{treat}$-$\mu_{control}$)/$\sigma$.
+- La correlación intra-cluster ($\rho$) y número de clusters. No se incluye en este análisis. (Pero se debería incluir.) 
+
+## ¿Cómo se calcula el poder de una encuesta?
+
+No es del todo claro cómo se calcula el poder de una encuesta cuando no se conoce exactamente su diseño muestral.
+
+Este ejercicio ofrece una alternativa a no poder decir nada sobre el poder de las encuestas. Ya que algunas fichas técnicas de las encuestas reportan márgenes de error para cierto tipo de pruebas (e.g. *"el margen de error para una confianza del Y% es X% para proporciones mayores a Z%"*), se utilizan esos márgenes para calcular el poder *post hoc* de cada encuesta utilizando la muestra efectiva, el tipo de prueba (i.e. diferencias entre proporciones), el nivel de significancia (casi siempre 95%) y se deja como variable el tamaño del efecto (de 2%, 5% y 8% de diferencia).
+
+Los cálculos de poder a continuación se realizan para proporciones ($p$). Todos son test de una sola cola (i.e. mayor a $\alpha$) de la siguiente forma: 
+<br>
+<br>
+$H_0: p = X$
+<br>
+<br>
+$H_1: p = X + \epsilon$, donde $X$ es la proporción especificada en la ficha técnica de la encuesta y $\epsilon$ el tamaño del efecto a estimar.
+
+Se utiliza **pwr.p.test** del paquete [**pwr**](https://cran.r-project.org/web/packages/pwr/pwr.pdf), que se define así: h (H1, H0), n (muestra), sig.level (alpha), y la opción de una sola cola (alternative = "greater").
+
+## Limitaciones del análsis
+
+1. No se incluyen clusters, así que la *correlación intra-cluster se asume cero*. Eso infla el poder para todas las encuestas, pero desafortunadamente no es posible reconstruir la varianza dentro de la estratificación de las muestras que hacen las encuestas.
+
+2. Para las encuestas que no mencionan el tipo de prueba se asume una prueba de diferencia de proporciones mayor a 50%.
+
+## Preparación para la estimación de poder:
+
+En un paso se sube la información de las encuestas con RCurl. Luego,
+para agilizar los cálculos, se definen algunos parámetros por grupos de encuestas según lo que diga la ficha técnica:
+```{r, echoe=FALSE,message=FALSE}
+library(RCurl)
+
+# Cargar encuestas desde GitHub
+encuestas <- read.csv(text=getURL("https://raw.githubusercontent.com/nelsonamayad/Elecciones-presidenciales-2018/master/Elecciones%202018/encuestas2018.csv"), header=T)
+
+#1. Diferencias de proporciones en fichas técnicas
+#1.1 Diferencias de proporciones 0.5 para encuestas #: 3-4, 6-9, 16, 29, 33 y Default: 1,10,12,14,18,21,22,24,25,28,31,32,35
+cons.1 <- 0.5       
+gr1 <- c(1,3,4,6,7,8,9,10,12,14,16,18,21,22,24,25,26,28,29,31,32,33,35)
+
+#1.2 Diferencias de proporciones 0.2 para encuestas #: 2,5,13,17,19,23,34
+cons.2 <- 0.2   
+gr2 <- c(2,5,13,17,19,23,34)
+  
+#1.3 Diferencias de proporciones 0.25 para encuestas #11
+cons.3 <- 0.25
+gr3 <- 11
+
+#1.4 Diferencias de proporciones 0.14 para encuestas # 15 y 20
+cons.4 <- 0.14
+gr4 <- c(15,20)
+  
+#1.5 Diferencias de proporciones 0.24 para encuestas # 27
+cons.5 <- 0.24
+gr5 <- 27
+  
+#1.6 Diferencias de proporciones 0.35 para encuestas # 30 y 36
+cons.6 <- 0.35
+gr6 <- c(30,36)
+
+#1.7 Diferencias de proporciones 0.28 para encuestas #37
+cons.7 <- 0.28     #Encuestas: 37
+gr7 <- 37
+  
+#2. Tamaños de los efectos
+eff.1 <- 0.02   #Efecto a detectar: Diferencia de 2%
+eff.2 <- 0.05   #Efecto a detectar: Diferencia de 5%
+eff.3 <- 0.08    #Efecto a detectar: Diferencia de 8%
+a = 0.05        #Nivel de confianza 95%
+
+#3. Nivel de significancia
+a = 0.05         #Nivel de confianza 95%
+```
+
+#### Poder 2%: Efecto diminuto de diferencia
+
+¿Es la muestra de las encuestas suficiente para detectar una diferencia de 2% entre candidatos?
+
+Utilizando el paquete [**pwr**](https://cran.r-project.org/web/packages/pwr/pwr.pdf) de R y, el más ineficiente código imaginable, el poder de cada encuesta para detectar una diferencia de 2% entre la votación de los candidatos se calcula así:
+
+```{r, echoe=FALSE,message=FALSE}
+library(pwr)
+library(tidyverse)
+
+#1. Grupo 1, Efecto 1  ####
+pow.1 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[1])
+pow.3 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[3])
+pow.4 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[4])
+pow.6 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[6])
+pow.7 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[7])
+pow.8 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[8])
+pow.9 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[9])
+pow.10 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[10])
+pow.12 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[12])
+pow.14 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[14])
+pow.16 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[16])
+pow.18 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[18])
+pow.21 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[21])
+pow.22 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[22])
+pow.24 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[24])
+pow.25 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[25])
+pow.26 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[26])
+pow.28 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[28])
+pow.29 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[29])
+pow.31 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[31])
+pow.32 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[32])
+pow.33 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[33])
+pow.35 <- pwr.p.test(h = ES.h(eff.1+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[35])
+
+#2. Grupo 2, Efecto 1 ####
+pow.2 <- pwr.p.test(h = ES.h(eff.1+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[2])
+pow.5 <- pwr.p.test(h = ES.h(eff.1+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[5])
+pow.13 <- pwr.p.test(h = ES.h(eff.1+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[13])
+pow.17 <- pwr.p.test(h = ES.h(eff.1+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[17])
+pow.19 <- pwr.p.test(h = ES.h(eff.1+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[19])
+pow.23 <- pwr.p.test(h = ES.h(eff.1+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[23])
+pow.34 <- pwr.p.test(h = ES.h(eff.1+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[34])
+
+#3. Grupo 3, Efecto 1 ####
+pow.11 <- pwr.p.test(h = ES.h(eff.1+cons.3, cons.3), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[11])
+
+#4. Grupo 4, Efecto 1 ####
+pow.15 <- pwr.p.test(h = ES.h(eff.1+cons.4, cons.4), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[15])
+pow.20 <- pwr.p.test(h = ES.h(eff.1+cons.4, cons.4), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[20])
+
+#5. Grupo 5, Efecto 1 ####
+pow.27 <- pwr.p.test(h = ES.h(eff.1+cons.5, cons.5), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[27])
+
+#6. Grupo 6, Efecto 1 ####
+pow.30 <- pwr.p.test(h = ES.h(eff.1+cons.6, cons.6), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[30])
+pow.36 <- pwr.p.test(h = ES.h(eff.1+cons.6, cons.6), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[36])
+
+#7. Grupo 7, Efecto 1 ####
+pow.37 <- pwr.p.test(h = ES.h(eff.1+cons.7, cons.7), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[37])
+
+# Tribble con los resultados: ####
+d.eff.1 <- tribble(~n, ~power1, 
+                   1, pow.1[[4]],
+                   2, pow.2[[4]],
+                   3, pow.3[[4]],
+                   4, pow.4[[4]],
+                   5, pow.5[[4]],
+                   6, pow.6[[4]],
+                   7, pow.7[[4]],
+                   8, pow.8[[4]],
+                   9, pow.9[[4]],
+                   10, pow.10[[4]],
+                   11, pow.11[[4]],
+                   12, pow.12[[4]],
+                   13, pow.13[[4]],
+                   14, pow.14[[4]],
+                   15, pow.15[[4]],
+                   16, pow.16[[4]],
+                   17, pow.17[[4]],
+                   18, pow.18[[4]],
+                   19, pow.19[[4]],
+                   20, pow.20[[4]],
+                   21, pow.21[[4]],
+                   22, pow.22[[4]],
+                   23, pow.23[[4]],
+                   24, pow.24[[4]],
+                   25, pow.25[[4]],
+                   26, pow.26[[4]],
+                   27, pow.27[[4]],
+                   28, pow.28[[4]],
+                   29, pow.29[[4]],
+                   30, pow.30[[4]],
+                   31, pow.31[[4]],
+                   32, pow.32[[4]],
+                   33, pow.33[[4]],
+                   34, pow.34[[4]],
+                   35, pow.35[[4]],
+                   36, pow.36[[4]],
+                   37, pow.37[[4]]
+                   )
+```
+
+#### Poder 5%: Efecto mediano de diferencia
+
+¿Es la muestra de las encuestas suficiente para detectar una diferencia de 5% entre candidatos?
+
+```{r, echoe=FALSE,message=FALSE}
+library(pwr)
+library(tidyverse)
+
+#1. Grupo 1, Efecto 2  ####
+pow.1 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[1])
+pow.3 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[3])
+pow.4 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[4])
+pow.6 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[6])
+pow.7 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[7])
+pow.8 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[8])
+pow.9 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[9])
+pow.10 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[10])
+pow.12 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[12])
+pow.14 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[14])
+pow.16 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[16])
+pow.18 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[18])
+pow.21 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[21])
+pow.22 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[22])
+pow.24 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[24])
+pow.25 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[25])
+pow.26 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[26])
+pow.28 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[28])
+pow.29 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[29])
+pow.31 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[31])
+pow.32 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[32])
+pow.33 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[33])
+pow.35 <- pwr.p.test(h = ES.h(eff.2+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[35])
+
+#2. Grupo 2, Efecto 2 ####
+pow.2 <- pwr.p.test(h = ES.h(eff.2+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[2])
+pow.5 <- pwr.p.test(h = ES.h(eff.2+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[5])
+pow.13 <- pwr.p.test(h = ES.h(eff.2+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[13])
+pow.17 <- pwr.p.test(h = ES.h(eff.1+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[17])
+pow.19 <- pwr.p.test(h = ES.h(eff.2+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[19])
+pow.23 <- pwr.p.test(h = ES.h(eff.2+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[23])
+pow.34 <- pwr.p.test(h = ES.h(eff.2+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[34])
+
+#3. Grupo 3, Efecto 2 ####
+pow.11 <- pwr.p.test(h = ES.h(eff.2+cons.3, cons.3), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[11])
+
+#4. Grupo 4, Efecto 2 ####
+pow.15 <- pwr.p.test(h = ES.h(eff.2+cons.4, cons.4), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[15])
+pow.20 <- pwr.p.test(h = ES.h(eff.2+cons.4, cons.4), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[20])
+
+#5. Grupo 5, Efecto 2 ####
+pow.27 <- pwr.p.test(h = ES.h(eff.2+cons.5, cons.5), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[27])
+
+#6. Grupo 6, Efecto 2 ####
+pow.30 <- pwr.p.test(h = ES.h(eff.2+cons.6, cons.6), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[30])
+pow.36 <- pwr.p.test(h = ES.h(eff.2+cons.6, cons.6), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[36])
+
+#7. Grupo 7, Efecto 3 ####
+pow.37 <- pwr.p.test(h = ES.h(eff.2+cons.7, cons.7), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[37])
+
+# Tribble con los resultados: ####
+d.eff.2 <- tribble(~n, ~power2, 
+                   1, pow.1[[4]],
+                   2, pow.2[[4]],
+                   3, pow.3[[4]],
+                   4, pow.4[[4]],
+                   5, pow.5[[4]],
+                   6, pow.6[[4]],
+                   7, pow.7[[4]],
+                   8, pow.8[[4]],
+                   9, pow.9[[4]],
+                   10, pow.10[[4]],
+                   11, pow.11[[4]],
+                   12, pow.12[[4]],
+                   13, pow.13[[4]],
+                   14, pow.14[[4]],
+                   15, pow.15[[4]],
+                   16, pow.16[[4]],
+                   17, pow.17[[4]],
+                   18, pow.18[[4]],
+                   19, pow.19[[4]],
+                   20, pow.20[[4]],
+                   21, pow.21[[4]],
+                   22, pow.22[[4]],
+                   23, pow.23[[4]],
+                   24, pow.24[[4]],
+                   25, pow.25[[4]],
+                   26, pow.26[[4]],
+                   27, pow.27[[4]],
+                   28, pow.28[[4]],
+                   29, pow.29[[4]],
+                   30, pow.30[[4]],
+                   31, pow.31[[4]],
+                   32, pow.32[[4]],
+                   33, pow.33[[4]],
+                   34, pow.34[[4]],
+                   35, pow.35[[4]],
+                   36, pow.36[[4]],
+                   37, pow.37[[4]]
+                   )
+```
+
+#### Poder 8%: Efecto grande de diferencia
+
+¿Es la muestra de las encuestas suficiente para detectar una diferencia de 8% entre candidatos?
+
+```{r, echoe=FALSE,message=FALSE}
+library(pwr)
+library(tidyverse)
+
+#1. Grupo 1, Efecto 3  ####
+pow.1 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[1])
+pow.3 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[3])
+pow.4 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[4])
+pow.6 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[6])
+pow.7 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[7])
+pow.8 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[8])
+pow.9 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[9])
+pow.10 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[10])
+pow.12 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[12])
+pow.14 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[14])
+pow.16 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[16])
+pow.18 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[18])
+pow.21 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[21])
+pow.22 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[22])
+pow.24 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[24])
+pow.25 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[25])
+pow.26 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[26])
+pow.28 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[28])
+pow.29 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[29])
+pow.31 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[31])
+pow.32 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[32])
+pow.33 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[33])
+pow.35 <- pwr.p.test(h = ES.h(eff.3+cons.1, cons.1), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[35])
+
+#2. Grupo 2, Efecto 3 ####
+pow.2 <- pwr.p.test(h = ES.h(eff.3+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[2])
+pow.5 <- pwr.p.test(h = ES.h(eff.3+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[5])
+pow.13 <- pwr.p.test(h = ES.h(eff.3+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[13])
+pow.17 <- pwr.p.test(h = ES.h(eff.1+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[17])
+pow.19 <- pwr.p.test(h = ES.h(eff.3+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[19])
+pow.23 <- pwr.p.test(h = ES.h(eff.3+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[23])
+pow.34 <- pwr.p.test(h = ES.h(eff.3+cons.2, cons.2), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[34])
+
+#3. Grupo 3, Efecto 3 ####
+pow.11 <- pwr.p.test(h = ES.h(eff.3+cons.3, cons.3), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[11])
+
+#4. Grupo 4, Efecto 3 ####
+pow.15 <- pwr.p.test(h = ES.h(eff.3+cons.4, cons.4), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[15])
+pow.20 <- pwr.p.test(h = ES.h(eff.3+cons.4, cons.4), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[20])
+
+#5. Grupo 5, Efecto 3 ####
+pow.27 <- pwr.p.test(h = ES.h(eff.3+cons.5, cons.5), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[27])
+
+#6. Grupo 6, Efecto 3 ####
+pow.30 <- pwr.p.test(h = ES.h(eff.3+cons.6, cons.6), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[30])
+pow.36 <- pwr.p.test(h = ES.h(eff.3+cons.6, cons.6), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[36])
+
+#7. Grupo 7, Efecto 3 ####
+pow.37 <- pwr.p.test(h = ES.h(eff.3+cons.7, cons.7), sig.level = a, alternative = "greater", n = encuestas$muestra_int_voto[37])
+
+# Tribble con los resultados: ####
+d.eff.3 <- tribble(~n, ~power3, 
+                   1, pow.1[[4]],
+                   2, pow.2[[4]],
+                   3, pow.3[[4]],
+                   4, pow.4[[4]],
+                   5, pow.5[[4]],
+                   6, pow.6[[4]],
+                   7, pow.7[[4]],
+                   8, pow.8[[4]],
+                   9, pow.9[[4]],
+                   10, pow.10[[4]],
+                   11, pow.11[[4]],
+                   12, pow.12[[4]],
+                   13, pow.13[[4]],
+                   14, pow.14[[4]],
+                   15, pow.15[[4]],
+                   16, pow.16[[4]],
+                   17, pow.17[[4]],
+                   18, pow.18[[4]],
+                   19, pow.19[[4]],
+                   20, pow.20[[4]],
+                   21, pow.21[[4]],
+                   22, pow.22[[4]],
+                   23, pow.23[[4]],
+                   24, pow.24[[4]],
+                   25, pow.25[[4]],
+                   26, pow.26[[4]],
+                   27, pow.27[[4]],
+                   28, pow.28[[4]],
+                   29, pow.29[[4]],
+                   30, pow.30[[4]],
+                   31, pow.31[[4]],
+                   32, pow.32[[4]],
+                   33, pow.33[[4]],
+                   34, pow.34[[4]],
+                   35, pow.35[[4]],
+                   36, pow.36[[4]],
+                   37, pow.37[[4]]
+                   )
+```
+
+## El poder estadístico de las encuestas
+
+El estándar de poder (arbitrario, como todo lo frecuentista) para un test es **80%**. Eso quiere decir que para detectar un efecto que existe, dado un tamaño de la muestra específico y con 95% de nivel de significancia, será posible identificar ese efecto el 4 de cada 5 veces (80%). 
+
+Este es el poder estadístico estimado para cada encuesta en cada uno de los 3 diferentes tamaños de efectos: diminutos (2%), mediano (5%) y grande (8%):
+
+```{r, echoe=FALSE,message=FALSE}
+library(tidyverse)
+
+#1. Pegar calculos de poder a los datos de las encuestas
+pow <- cbind(d.eff.1,d.eff.2[2],d.eff.3[2])
+pow <- left_join(select(encuestas, n, fecha, encuestadora, muestra_int_voto), pow, by = "n")
+
+#2. Formato largo
+df <- pow %>% gather(enc, power, power1, power2, power3)
+
+#3. Grafica:
+ggplot(df %>% filter(n>16), aes(x=power,y=muestra_int_voto,group=encuestadora))+
+  geom_jitter(aes(shape=encuestadora, color=enc), size=4) +
+  #Corte arbitrario 80%
+  geom_vline(xintercept=0.8, linetype="dashed") +   
+  theme_classic()+
+  theme(legend.position="bottom", legend.title=element_blank(),
+        panel.background=element_rect(fill="white", color="grey70")) +
+  scale_y_continuous(limits=c(0,4000)) +
+  scale_x_continuous(limits=c(0,1), breaks=c(0,0.2,0.4,0.6,0.8,1)) +
+  labs(y="Muestra de la encuesta*", 
+       x="Poder de la encuesta", 
+       title="3 poderes de las encuestas",
+       subtitle="Poder post hoc de las encuestas (N = 22) para detectar diferencias de 2%, 5% y 8%",
+       caption="*Muestra que reporta la intención de voto, no necesariamente la muestra total \nFuente: Calculos en R usando test pwr.p.test"
+       ) +
+  scale_shape_manual(values=c(4,16,17,3,15,25,8))+
+  scale_color_brewer(palette = "Set1")
+```
+<br>
+
+> Las encuestas son muy pequeñas para detectar efectos pequeños en una carrera pareja, pero son lo suficientemente grandes para detectar diferencias de más de 8% entre los candidatos. Eso es normal.
+
+***
+#### Coda: 
+#### ¿Qué tan grande debieron ser las encuestas para detectar el resultado del plebiscito?
+<br>
+En el plebiscito de 2016, el [Si obtuvo 49.78% de los votos y el No 50.21%](https://es.wikipedia.org/wiki/Plebiscito_sobre_los_acuerdos_de_paz_de_Colombia_de_2016). La diferencia fue de 0.43%.
+
+Las encuestas estuvieron muy lejos del resultado:
+```{r, echoe=FALSE,message=FALSE}
+library(RCurl)
+library(tidyverse)
+
+# Cargar las encuestas desde GitHub
+pleb <- read.csv(text=getURL("https://raw.githubusercontent.com/nelsonamayad/Elecciones-presidenciales-2018/master/Plebiscito%202016/encuestas2016.csv"), header=T)
+
+# Alistamiento
+pleb <- pleb %>% mutate(fecha=as.Date(fecha),e_max=si+as.numeric(margen_error),e_min=si-as.numeric(margen_error))
+pleb <- pleb %>% filter(encuestadora!="Resultado",n!=1)
+
+# Grafica
+ggplot(pleb,aes(x=fecha,y=si))+
+  geom_point(aes(shape=encuestadora, color=encuestadora), size=4)+
+  geom_linerange(aes(ymin=e_min,ymax=e_max), color="grey60")+
+  geom_hline(yintercept=49.78,linetype="dashed")+
+  annotate("text", label="Si: 49.78%", x=as.Date("2016-09-25"), y=48, size=4) +
+  theme_classic()+
+  scale_color_brewer(palette="Set1")+
+  scale_shape_manual(values=c(15,16,17,25))+
+  theme(legend.position="bottom",
+        panel.background=element_rect(fill="white"),
+        legend.title=element_blank(),
+        legend.text=element_text(size=11)) +
+  labs(x="",y="% Votos 'Si'",
+       title="El descache de las encuestas en el plebistico",        subtitle="13 encuestas antes del plebiscito 2016 entre 18/08/2016 y 27/09/2016 con sus márgenes de error", 
+       caption="https://es.wikipedia.org/wiki/Plebiscito_sobre_los_acuerdos_de_paz_de_Colombia_de_2016")
+```
+
+Con el mismo método que se utilizó más arriba para las encuestas durante 2018, es posible responder qué tan grande hubieran tenido que ser las encuestas en la previa del plebiscito para detectar una diferencia de 0.43% en el resultado, con un poder de detección de 80%, un nivel de significancia de  95% y bajo la hipótesis de que el Si iba a ganar (51%):
+
+```{r, echoe=FALSE,message=FALSE}
+library(pwr)
+pwr.p.test(h=ES.h(0.5+0.0043, 0.51), sig.level=0.05, power=0.8, alternative = "less")
+```
+
+Para detectar el resultado del plebiscito en 4 de cada 5 intentos, las encuestas debieron encuestar a cerca de **47 mil personas**. Ningún intento con mil o mil y pico de encuestados hubiera podido detectar eso.
+
+> Las encuestas no están hechas para detectar diferencias pequeñas. Punto.
+
+***
+
+# Algunas referencias
+<br>
+Ellis, P. D. (2010). [The essential guide to effect sizes: Statistical power, meta-analysis, and the interpretation of research results.](https://books.google.fr/books/about/The_Essential_Guide_to_Effect_Sizes.html?id=5obZnfK5pbsC&redir_esc=y) Cambridge University Press.
+<br>
+<br>
+Gerber, A. S., & Green, D. P. (2012). [Field experiments: Design, analysis, and interpretation](http://books.wwnorton.com/books/webad.aspx?id=24003). WW Norton. p. 93
+<br>
+<br>
+EGAP, ["10 Things to Know About Statistical Power"](http://egap.org/methods-guides/10-things-you-need-know-about-statistical-power)
+<br>
+<br>
+Open Science Collaboration. (2015). [Estimating the reproducibility of psychological science](https://osf.io/447b3/download?format=pdf). Science, 349(6251), aac4716.
+<br>
+<br>
+[GPower 3.1 manual](http://www.gpower.hhu.de/fileadmin/redaktion/Fakultaeten/Mathematisch-Naturwissenschaftliche_Fakultaet/Psychologie/AAP/gpower/GPowerManual.pdf)
+<br>
+<br>
+Sullivan, L. [Power and sample size determination](http://sphweb.bumc.bu.edu/otlt/mph-modules/bs/bs704_power/BS704_Power_print.html)
