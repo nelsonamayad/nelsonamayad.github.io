@@ -1,0 +1,104 @@
+---
+title: "Recetas electorales"
+author: "Nelson Amaya"
+output: 
+  html_document:
+    theme: readable
+    code_folding: hide
+---
+<br>
+Twitter: [`@nelsonamayad`](https://twitter.com/NelsonAmayaD)
+<br>
+Publicación: **24-04-2018**
+<br>
+Última actualización: **02-05-2018**
+<br>
+Encuestas utilizadas en el análisis: **13**
+<br>
+
+***
+> *Another feature we lose in going from logic to uncertainty is incrementality* <br>
+- [Judea Pearl](http://bayes.cs.ucla.edu/jp_home.html)
+<br>
+
+```{r, echoe=FALSE,message=FALSE,fig.width = 10, fig.align = "center"}
+library(RCurl)
+library(tidyverse)
+
+#1. Importar encuestas desde GitHub #### 
+encuestas <- read.csv(text=getURL("https://raw.githubusercontent.com/nelsonamayad/Elecciones-presidenciales-2018/master/Elecciones%202018/encuestas2018.csv"))
+
+#2. Alistamiento #####
+df <- encuestas %>% select(n,fecha, encuestadora,ivan_duque,gustavo_petro,sergio_fajardo,german_vargas_lleras, humberto_delacalle, margen_error, muestra)
+df <- df %>% filter(as.Date(fecha, tz="GMT") >= as.Date('2018-01-01', tz="GMT"))
+df <- df %>% rename(m_error = margen_error)
+df <- df %>% select(-n) %>% gather(candidato, int_voto, ivan_duque,gustavo_petro,sergio_fajardo,german_vargas_lleras,humberto_delacalle)
+df <- df %>% mutate(e_max = int_voto+m_error,e_min=int_voto-m_error,fecha=as.Date(fecha))
+df <- df %>% transform(candidato=factor(candidato, levels=c("ivan_duque","gustavo_petro","sergio_fajardo","german_vargas_lleras","humberto_delacalle")))
+                       
+# Caracteristicas graficas ####
+shape_enc <- c(4,16,17,3,15,25,8)
+subtitle <- c("25 encuestas durante 2018, 13 desde las elecciones legislativas del 11 de marzo de 2018. \nCurva LOESS ponderada por el tamaño de la muestra de cada encuesta.")
+fuente <- c("Fuente: Cálculos @nelsonamayad con base en las encuestas públicamente disponibles.")
+legis <-  geom_vline(xintercept=as.Date("2018-03-11"), size=0.1,linetype="dashed")
+
+# 3 La grafica ####
+ggplot(df,aes(x=fecha, y=int_voto)) +
+  #Loess
+  geom_smooth(aes(fill=candidato, color=candidato, weight=muestra), method="loess", show.legend = F) +
+  #Encuestas
+  geom_point(aes(shape=encuestadora, size=muestra_int_voto), size=2) +
+  #Error
+  geom_linerange(aes(ymax=e_max, ymin=e_min),color="grey60") +
+  #Legislativas
+  legis+
+  #Labs
+  labs(x="",y="Intencion de voto %",
+       title="La única alternativa al chisme y la intuición:", 
+       subtitle=subtitle, 
+       caption = fuente)+
+  #Themes
+  theme(legend.position="bottom",
+        panel.background=element_rect(fill="white", color="grey50"),
+        legend.title=element_blank(),
+        legend.key=element_blank(),
+        strip.text.x = element_text(size=10),
+        strip.background=element_blank()) +
+  #Facets
+  facet_wrap(~candidato, nrow=1, labeller=labeller(candidato=c("gustavo_petro"="Gustavo Petro", "ivan_duque"="Ivan Duque", "sergio_fajardo"="Sergio Fajardo","german_vargas_lleras"="German Vargas Lleras","humberto_delacalle"="Humberto de la Calle"))) +
+  #Scales
+  scale_color_manual(values=c("orangered","gold2","green4","red2","red4")) +
+  scale_fill_manual(values=c("orangered","gold2","green4","red2","red4")) +
+  scale_shape_manual(values=shape_enc)
+```
+
+## El menú:
+<br>
+
+1. [_**Entrada**_](https://nelsonamayad.shinyapps.io/col2018_tend/): aplicación para ver las tendencias en la intención de voto para cada candidato según todas las encuestas públicamente disponibles. Preparada con [Shinyapps](https://www.shinyapps.io/).
+
+2. [_**Aperitivo**_](https://nelsonamayad.github.io/poder/poder): ¿qué pueden detectar las encuestas? ¿Son demasiado pequeñas para ser útiles? Un intento imperfecto de medir el poder estadístico de las encuestas. Preparado con [pwr](https://cran.r-project.org/web/packages/pwr/vignettes/pwr-vignette.html) en R.
+
+3. [_**Plato Simple**_](https://nelsonamayad.github.io/simple/simple): primera receta para un modelo bayesiano lineal que sigue las pocas encuestas de intencion de voto. Permite un pronóstico básico pero limitado. Preparada con [Stan](http://mc-stan.org/users/interfaces/rstan.html). 
+
+4. [_**Plato Mixto**_](https://nelsonamayad.github.io/mixto/mixto): esta segunda receta es mejor que la primera, pero más complicada: introduce efectos aleatorios para interceptos y pendientes a la receta simple. Se ajusta mejor a los datos de las encuestas para todos los candidatos. Preparada con [Stan](http://mc-stan.org/users/interfaces/rstan.html).
+
+***
+## ¿Qué se puede aprender de las encuestas? 
+<br>
+
+La respuesta de [La Silla Vacía (LSV)](http://lasillavacia.com/blogs/la-carrera-de-caballos-en-la-silla-62772) es categórica: no se puede aprender nada. Y puede que tengan razón: las encuestas se han descachado en casi todas las elecciones en las que se han utilizado para pronosticar el resultado. A veces se descachan en la dirección: en un ejercicio de estadística con las ganas, [The Upshot del New York Times le dió 85% de probabilidad de ganar a Hillary Clinton en la víspera de las elecciones de 2016](https://www.nytimes.com/interactive/2016/upshot/presidential-polls-forecast.html). Otras veces se descachan en tamaño: aunque las encuestas en Francia siempre dieron a Macron como ganador sobre Le Pen, [tuvieron un sesgo de más de 10 pp del resultado final](https://fivethirtyeight.com/features/macron-won-but-the-french-polls-were-way-off/). 
+
+Hay otra posibilidad, otra explicación a la posición de LSV. Es simple: los medios de comunicación [parecen ser incapaces de lidiar con probabilidades](https://fivethirtyeight.com/features/the-media-has-a-probability-problem/). Tienden a malinterpretar los datos, a clasificar como certero lo incierto y a simplificar indebidamente la información disponible para que quepa en una narrativa fácil de digerir. Dice LSV sobre las encuestas: "Nuestro razonamiento es que si en realidad *no son un instrumento totalmente confiable* para sondear la intención electoral de los colombianos, *cualquier análisis* que haga La Silla con base en ellas más que informar puede despistar" (énfasis añadido). Es comprehensible que los medios no sepan cómo escudriñar una encuesta, o cómo representar un pronóstico probabilístico; al fin y al cabo eso es difícil de hacer. Pero hay algo profundamente equivocado en creer que cualquier análisis que se haga sobre un instrumento imperfecto solo puede despistar o está hecho con ese propósito.
+
+Otros medios como la revista Semana no han ni siquiera descubierto su propia ignorancia, ya que [parece que no son capaces de distinguir entre un promedio y una encuesta](https://www.semana.com/elecciones-presidenciales-2018/noticias/elecciones-presidenciales-la-encuesta-que-mide-todas-las-encuestas-559629).
+
+Me gusta el trabajo de LSV, y [lo que han preparado para las elecciones es bueno](http://lasillavacia.com/elecciones2018#/la-maquinaria). Pero su racionalización sobre las encuestas es equivocada y perezosa.
+
+Las encuestas son la única alternativa a la intuición y el chisme. Tienen errores, algunos explícitos y otros implícitos. Usan diferentes metodologías y estrategias muestrales, unas mejores que otras. Algunas revelan la tasa de respuesta; otras se la guardan. [Las muestras que toman son demasiado pequeñas para identificar diferencias pequeñas](https://nelsonamayad.github.io/poder/poder). Hay muchas razones para cuestionar, incluso desconfiar, de las encuestas. Pero hay más razones para desconfiar de analistas y columnistas: a la carreta casi nunca se le lleva contabilidad.
+
+No creo que uno pueda criticar sin ofrecer una alternativa. Así que preparé un menú con bases estadísticas rigurosas, datos abiertos, código replicable y preparado con software open-source para hacerle seguimiento a las encuestas. **Es la única manera de hacer estadística creíble**. La idea es llenar un espacio, bueno, vacío: reconocer que en las encuestas puede haber información valiosa, y que sólo en conjunto se puede aproximar su valor, cualquiera que sea. Ese espacio no se puede llenar con [índices pomposos sin detalles](https://www.semana.com/opinion/articulo/la-volatilidad-de-las-preferencias-electorales-columna-de-juan-fernando-londono/562333), salsas secretas ni subterfugios estadísticos.
+
+Este menú mejorará y cambiará con el paso del tiempo. Ahora mismo hay más recetas en el horno. Todas las recetas comparten la mismas características: acceso a los datos, el código sobre cómo se prepara cada plato, los detalles sobre cada supuesto utilizado, descripción de los modelos, estimaciones y resultados. Todo sobre la mesa.
+
+Buen provecho.
