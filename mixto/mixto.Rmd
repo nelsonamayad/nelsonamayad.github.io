@@ -12,16 +12,16 @@ Twitter: [`@nelsonamayad`](https://twitter.com/NelsonAmayaD)
 <br>
 Publicación: **25-04-2018**
 <br>
-Última actualización: **27-04-2018**. *Encuesta Invamer*
+Última actualización: **11-05-2018**
 <br>
 <br>
 ```{r setup, include=FALSE}
 options(Encoding="UTF-8")
 knitr::opts_chunk$set(echo = TRUE)
 ```
- *"Linear regression is the geocentric model of applied statistics."*<br>
+> *"Linear regression is the geocentric model of applied statistics."*<br>
 - [Richard McElreath](https://twitter.com/rlmcelreath)
-<br>
+
 <br>
 La [primera receta](https://nelsonamayad.github.io/receta) para hacerle seguimiento a las encuestas logra mucho con muy poco. Pero desaprovecha [la poca información que hay](https://nelsonamayad.shinyapps.io/col2018_tend/).
 
@@ -48,16 +48,16 @@ Primero veamos cómo se comparan los resultados del segundo plato *mixto* con lo
 library(tidyverse)
 #Platos 1 y 2:
 platos <- tribble(~candidato,~int_voto,~m_2018,~m_03.2018,~plato,
-  "Sergio Fajardo",13.4,13.7,11.6,"Plato Simple",
-  "Gustavo Petro",22.7,22.7,26.2,"Plato Simple",
-  "Ivan Duque",40.6,25.7,38.8,"Plato Simple",
-  "Humberto de la Calle",2.3,4.5,3.3,"Plato Simple",
-  "German Vargas Lleras",7.6,8.3,7.1,"Plato Simple",
-  "Sergio Fajardo",13.3,13.7,11.6,"Plato Mixto",
-  "Gustavo Petro",30.1,22.7,26.2,"Plato Mixto",
-  "Ivan Duque",41.3,25.7,38.8,"Plato Mixto",
-  "Humberto de la Calle",2.4,4.5,3.3,"Plato Mixto",
-  "German Vargas Lleras",7.9,8.3,7.1,"Plato Mixto")
+  "Sergio Fajardo",13.2,13.8,12.4,"Plato Simple",
+  "Gustavo Petro",22.9,23.5,26.5,"Plato Simple",
+  "Ivan Duque",34,27.5,38.3,"Plato Simple",
+  "Humberto de la Calle",3.2,4.2,3.2,"Plato Simple",
+  "German Vargas Lleras",12.4,8.4,7.5,"Plato Simple",
+  "Sergio Fajardo",16.6,13.8,12.4,"Plato Mixto",
+  "Gustavo Petro",26.9,23.5,26.5,"Plato Mixto",
+  "Ivan Duque",37.7,27.5,38.3,"Plato Mixto",
+  "Humberto de la Calle",3.3,4.2,3.2,"Plato Mixto",
+  "German Vargas Lleras",7.53,8.4,7.5,"Plato Mixto")
 
 #Orden                
 platos <- platos %>% mutate(candidato=factor(candidato,levels=c("Humberto de la Calle","German Vargas Lleras","Sergio Fajardo","Gustavo Petro","Ivan Duque")),plato=factor(plato))
@@ -88,7 +88,7 @@ ggplot(platos, aes(x=candidato, color=candidato))+
 ***
 ## Ingredientes
 <br>
-Esta receta utiliza la misma información que la anterior: las **10 encuestas** que han salido después de las elecciones legislativas del 11 de marzo.
+Esta receta utiliza la misma información que la anterior: las encuestas que han salido después de las elecciones legislativas del 11 de marzo.
 
 #### *Encuestas*
 
@@ -327,7 +327,7 @@ Ahora nos vamos a RStan para prepara el plato:
 ```{r results = "hide",message=F}
 library(rstan)
 options(mc.cores = parallel::detectCores())
-duque_fit <- stan(file='duque.stan',data=list(N=11,N_encuestadora=6,int_voto=id$int_voto,encuestadora=id$encuestadora, muestra_int_voto=id$muestra_int_voto,m_error=id$m_error,dd=id$dd,tipo=id$tipo),control=list(adapt_delta=0.9),iter=4000,chains=4)
+duque_fit <- stan(file='duque.stan',data=list(N=13,N_encuestadora=6,int_voto=id$int_voto,encuestadora=id$encuestadora, muestra_int_voto=id$muestra_int_voto,m_error=id$m_error,dd=id$dd,tipo=id$tipo),control=list(adapt_delta=0.9),iter=4000,chains=4)
 ```
 <br>
 El plato mixto necesita mucho más tiempo para cocinarse que el simple, pero al final sale. Aunque *duque.stan* tiene muchas divergencias iniciales en el muestreo, el plato sale del horno sin quemarse. 
@@ -341,7 +341,7 @@ color_scheme_set("orange")
 posterior <- as.matrix(duque_fit)
   
 #Trace plot para los parametros de interes
-mcmc_trace(posterior,pars=c("m[1]","m[2]","m[3]","m[4]","m[5]","m[6]","m[7]","m[8]","m[9]","m[10]","m[11]"))
+mcmc_trace(posterior,pars=c("m[1]","m[2]","m[3]","m[4]","m[5]","m[6]","m[7]","m[8]","m[9]","m[10]","m[11]","m[12]","m[13]"))
 ```
 <br>
 
@@ -353,13 +353,13 @@ Para los que tuvieron la paciencia de bajar hasta acá, va un premio: los valore
 ``` {r, echo=FALSE, message=F}
 library(ggplot2)
 # Parámetros vs Observados
-par <- posterior %>% as.tibble() %>% select(127:137) %>% summarize_all(funs(mean)) %>% t()
-obs <- tibble(int_voto = id$int_voto,n = seq(from=1,to=11,by=1))
+par <- posterior %>% as.tibble() %>% select(127:139) %>% summarize_all(funs(mean)) %>% t()
+obs <- tibble(int_voto = id$int_voto,n = seq(from=1,to=13,by=1))
 par_obs <- cbind(par,obs)
 ggplot(par_obs, aes(x=n))+
     geom_point(aes(y=int_voto),size=4,color="orangered")+
     geom_point(aes(y=par),shape=10,size=5,color="red2")+
-    theme_classic()+labs(y="intencion de voto",x="")+scale_x_continuous(breaks=c(1,2,3,4,5,6,7,8,9,10,11))+
+    theme_classic()+labs(y="intencion de voto",x="")+scale_x_continuous(breaks=c(1,2,3,4,5,6,7,8,9,10,11,12,13))+
     ylim(values=c(30,50))
 ```
 <br>
@@ -371,7 +371,7 @@ Este plato tiene muchísimos parámetros, así que abajo sólo presento los más
 library(bayesplot)
 posterior <- as.matrix(duque_fit)
 color_scheme_set("orange")
-mcmc_areas(posterior,prob=0.9,prob_outer = 0.99,point_est="mean",pars=c("m[1]","m[2]","m[3]","m[4]","m[5]","m[6]","m[7]","m[8]","m[9]","m[10]","m[11]"))
+mcmc_areas(posterior,prob=0.9,prob_outer = 0.99,point_est="mean",pars=c("m[1]","m[2]","m[3]","m[4]","m[5]","m[6]","m[7]","m[8]","m[9]","m[10]","m[11]","m[12]","m[13]"))
 ```
 <br>
 <br>
