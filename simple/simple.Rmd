@@ -12,16 +12,16 @@ Twitter: [`@nelsonamayad`](https://twitter.com/NelsonAmayaD)
 <br>
 Publicación: **17-04-2018**
 <br>
-Última actualización: **27-04-2018**. *Encuesta Invamer*.
+Última actualización: **11-05-2018**.
 <br>
 <br>
 ```{r setup, include=FALSE}
 options(Encoding="UTF-8")
 knitr::opts_chunk$set(echo = TRUE)
 ```
- *"Far better an approximate answer to the right question, which is often vague, than the exact answer to the wrong question, which can always be made precise."*<br>
-- John Tukey
-<br>
+> *"Far better an approximate answer to the right question, which is often vague, than the exact answer to the wrong question, which can always be made precise."*<br>
+- [John Tukey](https://en.wikipedia.org/wiki/John_Tukey)
+
 <br>
 Este es la primera de varias recetas. Todas tienen el mismo propósito: ver qué se puede inferir de las encuestas de intención de voto para las elecciones presidenciales de Colombia en 2018. Cada receta combina tres cosas chéveres: estadística bayesiana, reproducibilidad y computación open-source. [Las tendencias en las encuestas se ven mejor acá](https://nelsonamayad.shinyapps.io/col2018_tend/).
 
@@ -37,7 +37,7 @@ Buen provecho.
 
 ## Plato
 <br>
-Estos son los resultados del modelo. Son promedios de la distribución posterior estimada para cada candidato, así como los intervalos HPD (higher posterior density) de 90% sobre esos parámetros. Para tener una referencia, el resultado se compara con dos promedios simples: uno sobre las 18 encuestas disponibles a la fecha que se han hecho durante 2018, y otro sobre las **11 encuestas** que se han hecho después de las elecciones legislativas del 11 de marzo.
+Estos son los resultados del modelo. Son promedios de la distribución posterior estimada para cada candidato, así como los intervalos HPD (higher posterior density) de 90% sobre esos parámetros. Para tener una referencia, el resultado se compara con dos promedios simples: uno sobre las encuestas disponibles a la fecha que se han hecho durante 2018, y otro sobre las **14 encuestas** que se han hecho después de las elecciones legislativas del 11 de marzo.
 
 Los intervalos son amplios; difícil algo diferente con tan pocas encuestas. Conforme salgan más encuestas, espero que el intervalo se reduzca.
 
@@ -46,11 +46,11 @@ library(tidyverse)
 
 #Plato servido
 plato <- tribble(~candidato,~int_voto,~int_voto_max,~int_voto_min,~m_2018,~m_03.2018,
-            "Sergio Fajardo",13.4,16.1,10.7,13.7,11.6,
-            "Gustavo Petro",22.7,24.5,21.0,22.7,26.2,
-            "Ivan Duque",40.6,45.3,35.9,25.7,38.8,
-            "Humberto de la Calle",2.3,3.8,0.8,4.5,3.3,
-            "German Vargas Lleras",7.5,8.9,6.2,8.3,7.1)
+            "Sergio Fajardo",13.2,15,11.1,13.8,12.4,
+            "Gustavo Petro",22.9,25.5,20.5,23.5,26.5,
+            "Ivan Duque",34,37.7,30.6,27.5,38.3,
+            "Humberto de la Calle",3.2,4.6,1.7,4.2,3.2,
+            "German Vargas Lleras",12.4,13.4,11.1,8.4,7.5)
 
 #Orden                
 plato <- plato %>% mutate(candidato=factor(candidato,levels=c("Humberto de la Calle","German Vargas Lleras","Sergio Fajardo","Gustavo Petro","Ivan Duque")))
@@ -246,7 +246,7 @@ Ahora a RStan:
 ```{r results = "hide",message=FALSE}
 library(rstan)
 options(mc.cores = parallel::detectCores())
-fajardo_fit <- stan(file='fajardo.stan',data=list(N=11,N_encuestadora=6,int_voto=sf$int_voto,encuestadora=sf$encuestadora, muestra_int_voto=sf$muestra_int_voto,m_error=sf$m_error,dd=sf$dd,tipo=sf$tipo),control=list(adapt_delta=0.9),iter=4000,chains=4)
+fajardo_fit <- stan(file='fajardo.stan',data=list(N=13,N_encuestadora=6,int_voto=sf$int_voto,encuestadora=sf$encuestadora, muestra_int_voto=sf$muestra_int_voto,m_error=sf$m_error,dd=sf$dd,tipo=sf$tipo),control=list(adapt_delta=0.9),iter=4000,chains=4)
 ```
 <br>
 A pesar de las divergencias iniciales, el modelo converge rápido para todos los candidatos. Al fin y al cabo es muy simple y tiene pocas observaciones. 
@@ -260,21 +260,21 @@ color_scheme_set("green")
   
 # Crear matriz de muestras de la distribucion posterior
 posterior <- as.matrix(fajardo_fit)
-  
+
 #Trace plot para los parametros de interes
-mcmc_trace(posterior,pars=c("m[1]","m[2]","m[3]","m[4]","m[5]","m[6]","m[7]","m[8]","m[9]","m[10]","m[11]"))
+mcmc_trace(posterior,pars=c("m[1]","m[2]","m[3]","m[4]","m[5]","m[6]","m[7]","m[8]","m[9]","m[10]","m[11]","m[12]","m[13]"))
   
 # Parámetros vs Observados
-par <- posterior %>% as.tibble() %>% select(15:25) %>% summarize_all(funs(mean)) %>% t()
+par <- posterior %>% as.tibble() %>% select(15:27) %>% summarize_all(funs(mean)) %>% t()
 obs <- tibble(int_voto = sf$int_voto,
-                n = seq(from=1,to=11,by=1))
+                n = seq(from=1,to=13,by=1))
   par_obs <- cbind(par,obs)
   ggplot(par_obs, aes(x=n))+
     geom_point(aes(y=int_voto),color="green4")+
     geom_text(aes(y=int_voto,label="obs"),color="green4",hjust=-0.3)+
     geom_point(aes(y=par),color="red4")+
     geom_text(aes(y=par, label="par"),color="red4",hjust=-0.3)+
-    theme_classic()+labs(y="intencion de voto",x="")+scale_x_continuous(breaks=c(1,2,3,4,5,6,7,8,9,10,11))
+    theme_classic()+labs(y="intencion de voto",x="")+scale_x_continuous(breaks=c(1,2,3,4,5,6,7,8,9,10,11,12,13))
 
 ```
 <br>
