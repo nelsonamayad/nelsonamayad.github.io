@@ -1,8 +1,5 @@
 # Recetas electorales
 
-*Última actualización: 2018-04-27*
-
-
 1. [_**Entrada**_](https://nelsonamayad.shinyapps.io/col2018_tend/): Applicación para ver las tendencias para cada candidato, en todas las encuestas públicamente disponibles. Preparada con [Shinyapps](https://www.shinyapps.io/).
 
 2. [_**Aperitivo**_](https://nelsonamayad.github.io/poder/poder): ¿qué pueden detectar las encuestas? ¿Son demasiado pequeñas para ser útiles? Un intento imperfecto de medir el poder estadístico de las encuestas. Preparado con [pwr](https://cran.r-project.org/web/packages/pwr/vignettes/pwr-vignette.html) en R.
