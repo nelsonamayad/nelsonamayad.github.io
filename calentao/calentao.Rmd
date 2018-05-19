@@ -37,7 +37,7 @@ Buen provecho y acuérdese de votar por el que le de la gana.
 <br>
 Este calentao incluye todos los pronósticos que encontré. El primer ingrediente es una referencia: *Encuestas*, un promedio simple de la intención de voto, para cada candidato, entre todas las 18 encuestas que han salido desde las elecciones legislativas de marzo 11 de 2017. Los otros ingredientes son estimaciones puntuales, intervalos, o puntos e intervalos, dependiendo de lo que cada cocinero haya revelado.  
 
-```{r, echo=FALSE, message=FALSE}
+```{r, echo=T, message=FALSE}
 library(tidyverse)
 library(RCurl)
 
@@ -163,7 +163,7 @@ Estas son algunas generalidades del calentao:
 Estos son los resultados de las últimas estimaciones de las recetas bayesianas [Simple](https://nelsonamayad.github.io/simple/simple) y [Mixta](https://nelsonamayad.github.io/mixto/mixto). Tomo el promeio de la distribución posterior que resulta de cada receta, así como su [HPDI](https://en.wikipedia.org/wiki/Credible_interval) de 90%. No alcancé a terminar la receta multinomial, así que quedaron solo estas dos.
 <br>
 <br>
-```{r, echo=FALSE, message=FALSE, fig.width=9, fig.height=4}
+```{r, echo=T, message=FALSE, fig.width=9, fig.height=4}
 library(tidyverse)
 
 recetas <- recetas %>% mutate(candidato=factor(candidato,levels=c("Humberto de la Calle","Germán Vargas Lleras","Sergio Fajardo","Gustavo Petro","Iván Duque")))
@@ -190,7 +190,7 @@ El polémico pronóstico de Cifras y Conceptos es el ingrediente más creativo d
 Abajo va una reproducción de todas las actualizaciones de los intervalos que ha producido Cifras y Conceptos:
 <br>
 <br>
-```{r, echo=FALSE, message=FALSE, fig.width=9, fig.height=4}
+```{r, echo=T, message=FALSE, fig.width=9, fig.height=4}
 library(tidyverse)
 cyc <- cyc %>% mutate(candidato=factor(candidato,levels=c("Iván Duque","Germán Vargas Lleras","Gustavo Petro","Sergio Fajardo","Humberto de la Calle")))
 
@@ -217,7 +217,7 @@ Desde el periódico El País, [`@JorgeGalindo`](https://twitter.com/JorgeGalindo
 El cálculo hace muchos supuestos de ponderación pero no los muestra, y aunque describen lo que hacen, esa transparencia a medias no me gusta. De todas maneras ahí está.
 <br>
 <br>
-```{r, echo=FALSE, message=FALSE, fig.width=9, fig.height=4}
+```{r, echo=T, message=FALSE, fig.width=9, fig.height=4}
 library(tidyverse)
 
 elpais <- elpais %>% mutate(candidato=factor(candidato,levels=c("Humberto de la Calle","Germán Vargas Lleras","Sergio Fajardo","Gustavo Petro","Iván Duque")))
@@ -244,7 +244,7 @@ scale_y_continuous(limits = c(0,50),breaks=c(10,20,30,40,50))+  labs(x="",y="% v
 En este calentao solo se incluye lo que llaman *método de contabilidad de votos* porque lo demás es un buen ejemplo de rigor impostado: probabilidades sin interalos y sin rastro de cómo se calculan. ANIF dice que Duque tiene "65% de probabilidad de ganar" pero no muestra exactamente cómo llegaron a esa conclusión (¿por qué 65% y no 56%, o 73%? Ni idea). Eso no se puede incluir en el calentao.
 <br>
 <br>
-```{r, echo=FALSE, message=FALSE, fig.width=9, fig.height=4}
+```{r, echo=T, message=FALSE, fig.width=9, fig.height=4}
 library(tidyverse)
 
 anif <- anif %>% mutate(candidato=factor(candidato,levels=c("Humberto de la Calle","Sergio Fajardo","Gustavo Petro","Germán Vargas Lleras","Iván Duque")))
