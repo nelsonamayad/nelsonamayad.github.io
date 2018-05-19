@@ -12,7 +12,7 @@ Twitter: [`@nelsonamayad`](https://twitter.com/NelsonAmayaD)
 <br>
 Publicación: **17-04-2018**
 <br>
-Última actualización: **11-05-2018**.
+Última actualización: **19-05-2018**.
 <br>
 <br>
 ```{r setup, include=FALSE}
@@ -37,37 +37,35 @@ Buen provecho.
 
 ## Plato
 <br>
-Estos son los resultados del modelo. Son promedios de la distribución posterior estimada para cada candidato, así como los intervalos HPD (higher posterior density) de 90% sobre esos parámetros. Para tener una referencia, el resultado se compara con dos promedios simples: uno sobre las encuestas disponibles a la fecha que se han hecho durante 2018, y otro sobre las **14 encuestas** que se han hecho después de las elecciones legislativas del 11 de marzo.
+Estos son los resultados del modelo. Son promedios de la distribución posterior estimada para cada candidato, así como los intervalos HPD (higher posterior density) de 90% sobre esos parámetros. Para tener una referencia, el resultado se compara con un promedio simples sobre las **18 encuestas** que se han hecho después de las elecciones legislativas del 11 de marzo.
 
-Los intervalos son amplios; difícil algo diferente con tan pocas encuestas. Conforme salgan más encuestas, espero que el intervalo se reduzca.
+Como escribí en la primera publicación, esperaba que conforme salieran más encuestas el intervalo se redujera. Estos intervalos se han apretado con cada estimación porque la varianza de la intención de voto para todos los candidatos ha caído.
 
 ```{r, echo=FALSE, message=FALSE}
 library(tidyverse)
 
 #Plato servido
-plato <- tribble(~candidato,~int_voto,~int_voto_max,~int_voto_min,~m_2018,~m_03.2018,
-            "Sergio Fajardo",13.2,15,11.1,13.8,12.4,
-            "Gustavo Petro",22.9,25.5,20.5,23.5,26.5,
-            "Ivan Duque",34,37.7,30.6,27.5,38.3,
-            "Humberto de la Calle",3.2,4.6,1.7,4.2,3.2,
-            "German Vargas Lleras",12.4,13.4,11.1,8.4,7.5)
+simple <- tribble(~candidato,~int_voto,~int_voto_max,~int_voto_min,~m_03.2018,
+            "Sergio Fajardo",15.9,17.2,14.4,13.1,
+            "Gustavo Petro",27.5,31.5,23.7,26.8,
+            "Ivan Duque",40.4,43.2,37.5,38.1,
+            "Humberto de la Calle",2.2,3.2,1,3,
+            "German Vargas Lleras",6.7,7.9,5.6,6.6)
 
 #Orden                
-plato <- plato %>% mutate(candidato=factor(candidato,levels=c("Humberto de la Calle","German Vargas Lleras","Sergio Fajardo","Gustavo Petro","Ivan Duque")))
+simple <- simple %>% mutate(candidato=factor(candidato,levels=c("Humberto de la Calle","German Vargas Lleras","Sergio Fajardo","Gustavo Petro","Ivan Duque")))
 
 ```
 
 ```{r, echo=FALSE,message=FALSE}
 
-ggplot(plato, aes(x=candidato, color=candidato))+
+ggplot(simple, aes(x=candidato, color=candidato))+
   #plato
   geom_point(aes(y=int_voto))+
   geom_text(aes(y=int_voto,label=format(int_voto, digits=2)),vjust=-1, size=5)+
   geom_errorbar(aes(ymax=int_voto_max,ymin=int_voto_min,width=0.2))+
   geom_hline(yintercept=c(10,20,30,40,50), linetype="dashed",color="grey60")+
   #referencias
-  geom_point(aes(y=m_2018), shape=10, size=5)+
-  geom_text(aes(y=m_2018, label="2018",angle=90),size=2,hjust=1.6)+
   geom_point(aes(y=m_03.2018), shape=9,size=5)+
   geom_text(aes(y=m_03.2018, label="11.03.2018",angle=90),size=2,hjust=1.4)+
   coord_flip()+
@@ -246,7 +244,7 @@ Ahora a RStan:
 ```{r results = "hide",message=FALSE}
 library(rstan)
 options(mc.cores = parallel::detectCores())
-fajardo_fit <- stan(file='fajardo.stan',data=list(N=13,N_encuestadora=6,int_voto=sf$int_voto,encuestadora=sf$encuestadora, muestra_int_voto=sf$muestra_int_voto,m_error=sf$m_error,dd=sf$dd,tipo=sf$tipo),control=list(adapt_delta=0.9),iter=4000,chains=4)
+fajardo_fit <- stan(file='fajardo.stan',data=list(N=17,N_encuestadora=6,int_voto=sf$int_voto,encuestadora=sf$encuestadora, muestra_int_voto=sf$muestra_int_voto,m_error=sf$m_error,dd=sf$dd,tipo=sf$tipo),control=list(adapt_delta=0.95),iter=4000,chains=4)
 ```
 <br>
 A pesar de las divergencias iniciales, el modelo converge rápido para todos los candidatos. Al fin y al cabo es muy simple y tiene pocas observaciones. 
@@ -262,19 +260,19 @@ color_scheme_set("green")
 posterior <- as.matrix(fajardo_fit)
 
 #Trace plot para los parametros de interes
-mcmc_trace(posterior,pars=c("m[1]","m[2]","m[3]","m[4]","m[5]","m[6]","m[7]","m[8]","m[9]","m[10]","m[11]","m[12]","m[13]"))
+mcmc_trace(posterior,pars=c("m[1]","m[2]","m[3]","m[4]","m[5]","m[6]","m[7]","m[8]","m[9]","m[10]","m[11]","m[12]","m[13]","m[14]","m[15]","m[16]","m[17]"))
   
 # Parámetros vs Observados
-par <- posterior %>% as.tibble() %>% select(15:27) %>% summarize_all(funs(mean)) %>% t()
+par <- posterior %>% as.tibble() %>% select(15:31) %>% summarize_all(funs(mean)) %>% t()
 obs <- tibble(int_voto = sf$int_voto,
-                n = seq(from=1,to=13,by=1))
+                n = seq(from=1,to=17,by=1))
   par_obs <- cbind(par,obs)
   ggplot(par_obs, aes(x=n))+
     geom_point(aes(y=int_voto),color="green4")+
     geom_text(aes(y=int_voto,label="obs"),color="green4",hjust=-0.3)+
     geom_point(aes(y=par),color="red4")+
     geom_text(aes(y=par, label="par"),color="red4",hjust=-0.3)+
-    theme_classic()+labs(y="intencion de voto",x="")+scale_x_continuous(breaks=c(1,2,3,4,5,6,7,8,9,10,11,12,13))
+    theme_classic()+labs(y="intencion de voto",x="")+scale_x_continuous(breaks=c(1:17))
 
 ```
 <br>
