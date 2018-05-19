@@ -12,7 +12,7 @@ Twitter: [`@nelsonamayad`](https://twitter.com/NelsonAmayaD)
 <br>
 Publicación: **25-04-2018**
 <br>
-Última actualización: **11-05-2018**
+Última actualización: **19-05-2018**
 <br>
 <br>
 ```{r setup, include=FALSE}
@@ -47,17 +47,17 @@ Primero veamos cómo se comparan los resultados del segundo plato *mixto* con lo
 ```{r, echo=F, message=F}
 library(tidyverse)
 #Platos 1 y 2:
-platos <- tribble(~candidato,~int_voto,~m_2018,~m_03.2018,~plato,
-  "Sergio Fajardo",13.2,13.8,12.4,"Plato Simple",
-  "Gustavo Petro",22.9,23.5,26.5,"Plato Simple",
-  "Ivan Duque",34,27.5,38.3,"Plato Simple",
-  "Humberto de la Calle",3.2,4.2,3.2,"Plato Simple",
-  "German Vargas Lleras",12.4,8.4,7.5,"Plato Simple",
-  "Sergio Fajardo",16.6,13.8,12.4,"Plato Mixto",
-  "Gustavo Petro",26.9,23.5,26.5,"Plato Mixto",
-  "Ivan Duque",37.7,27.5,38.3,"Plato Mixto",
-  "Humberto de la Calle",3.3,4.2,3.2,"Plato Mixto",
-  "German Vargas Lleras",7.53,8.4,7.5,"Plato Mixto")
+platos <- tribble(~candidato,~int_voto,~int_voto_max,~int_voto_min,~m_03.2018,~plato,
+  "Sergio Fajardo",15.9,17.2,14.4,13.1,"Plato Simple",
+  "Gustavo Petro",27.5,31.5,23.7,26.8,"Plato Simple",
+  "Ivan Duque",40.4,43.2,37.5,38.1,"Plato Simple",
+  "Humberto de la Calle",2.2,3.2,1,3,"Plato Simple",
+  "German Vargas Lleras",6.7,7.9,5.6,6.6,"Plato Simple",
+  "Sergio Fajardo",15.8,17.3,14.2,13.1,"Plato Mixto",
+  "Gustavo Petro",30.1,33.3,26.9,26.8,"Plato Mixto",
+  "Ivan Duque",40.1,43.2,38.7,38.1,"Plato Mixto",
+  "Humberto de la Calle",2,3.2,1.1,3,"Plato Mixto",
+  "German Vargas Lleras",7.2,8.6,5.8,6.6,"Plato Mixto")
 
 #Orden                
 platos <- platos %>% mutate(candidato=factor(candidato,levels=c("Humberto de la Calle","German Vargas Lleras","Sergio Fajardo","Gustavo Petro","Ivan Duque")),plato=factor(plato))
@@ -69,8 +69,6 @@ ggplot(platos, aes(x=candidato, color=candidato))+
   geom_text(aes(y=int_voto,label=format(int_voto,digits=2)),vjust=-1, size=5)+
   geom_hline(yintercept=c(10,20,30,40,50),linetype="dashed",color="grey60")+
   #referencias
-  geom_point(aes(y=m_2018), shape=10, size=5)+
-  geom_text(aes(y=m_2018,label="2018",angle=90),size=2,hjust=1.6)+
   geom_point(aes(y=m_03.2018), shape=9,size=5)+
   geom_text(aes(y=m_03.2018, label="11.03.2018",angle=90),size=2,hjust=1.4)+
   coord_flip()+
@@ -327,7 +325,7 @@ Ahora nos vamos a RStan para prepara el plato:
 ```{r results = "hide",message=F}
 library(rstan)
 options(mc.cores = parallel::detectCores())
-duque_fit <- stan(file='duque.stan',data=list(N=13,N_encuestadora=6,int_voto=id$int_voto,encuestadora=id$encuestadora, muestra_int_voto=id$muestra_int_voto,m_error=id$m_error,dd=id$dd,tipo=id$tipo),control=list(adapt_delta=0.9),iter=4000,chains=4)
+duque_fit <- stan(file='duque.stan',data=list(N=17,N_encuestadora=6,int_voto=id$int_voto,encuestadora=id$encuestadora, muestra_int_voto=id$muestra_int_voto,m_error=id$m_error,dd=id$dd,tipo=id$tipo),control=list(adapt_delta=0.95),iter=4000,chains=4)
 ```
 <br>
 El plato mixto necesita mucho más tiempo para cocinarse que el simple, pero al final sale. Aunque *duque.stan* tiene muchas divergencias iniciales en el muestreo, el plato sale del horno sin quemarse. 
@@ -341,7 +339,7 @@ color_scheme_set("orange")
 posterior <- as.matrix(duque_fit)
   
 #Trace plot para los parametros de interes
-mcmc_trace(posterior,pars=c("m[1]","m[2]","m[3]","m[4]","m[5]","m[6]","m[7]","m[8]","m[9]","m[10]","m[11]","m[12]","m[13]"))
+mcmc_trace(posterior,pars=c("m[1]","m[2]","m[3]","m[4]","m[5]","m[6]","m[7]","m[8]","m[9]","m[10]","m[11]","m[12]","m[13]","m[14]","m[15]","m[16]","m[17]"))
 ```
 <br>
 
@@ -353,13 +351,13 @@ Para los que tuvieron la paciencia de bajar hasta acá, va un premio: los valore
 ``` {r, echo=FALSE, message=F}
 library(ggplot2)
 # Parámetros vs Observados
-par <- posterior %>% as.tibble() %>% select(127:139) %>% summarize_all(funs(mean)) %>% t()
-obs <- tibble(int_voto = id$int_voto,n = seq(from=1,to=13,by=1))
+par <- posterior %>% as.tibble() %>% select(127:143) %>% summarize_all(funs(mean)) %>% t()
+obs <- tibble(int_voto = id$int_voto,n = seq(from=1,to=17,by=1))
 par_obs <- cbind(par,obs)
 ggplot(par_obs, aes(x=n))+
     geom_point(aes(y=int_voto),size=4,color="orangered")+
     geom_point(aes(y=par),shape=10,size=5,color="red2")+
-    theme_classic()+labs(y="intencion de voto",x="")+scale_x_continuous(breaks=c(1,2,3,4,5,6,7,8,9,10,11,12,13))+
+    theme_classic()+labs(y="intencion de voto",x="")+scale_x_continuous(breaks=c(1:17))+
     ylim(values=c(30,50))
 ```
 <br>
@@ -371,7 +369,7 @@ Este plato tiene muchísimos parámetros, así que abajo sólo presento los más
 library(bayesplot)
 posterior <- as.matrix(duque_fit)
 color_scheme_set("orange")
-mcmc_areas(posterior,prob=0.9,prob_outer = 0.99,point_est="mean",pars=c("m[1]","m[2]","m[3]","m[4]","m[5]","m[6]","m[7]","m[8]","m[9]","m[10]","m[11]","m[12]","m[13]"))
+mcmc_areas(posterior,prob=0.9,prob_outer = 0.99,point_est="mean",pars=c("m[1]","m[2]","m[3]","m[4]","m[5]","m[6]","m[7]","m[8]","m[9]","m[10]","m[11]","m[12]","m[13]","m[14]","m[15]","m[16]","m[17]"))
 ```
 <br>
 <br>
