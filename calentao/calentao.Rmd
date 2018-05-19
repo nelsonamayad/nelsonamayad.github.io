@@ -1,0 +1,265 @@
+---
+title: "Plato, cocina, receta, ingredientes #3"
+subtitle: "Calentao de pronósticos electorales para la primera vuelta"
+author: "Nelson Amaya"
+output: 
+  html_document:
+      theme: readable
+      code_folding: hide
+---
+<br>
+Twitter: [`@nelsonamayad`](https://twitter.com/NelsonAmayaD)
+<br>
+Publicación: **20-05-2018**
+<br>
+Última actualización: **20-05-2018**.
+<br>
+<br>
+```{r setup, include=FALSE}
+options(Encoding="UTF-8")
+knitr::opts_chunk$set(echo = TRUE)
+```
+> *"The existence of a problem in knowledge depends on the future being different from the past, while the possibility of a solution of the problem depends on the future being like the past."*<br>
+- [Frank Knight](https://en.wikipedia.org/wiki/Frank_Knight)
+
+<br>
+Durante las últimas semanas han salido algunos pronósticos para la primera vuelta del 27 de mayo. Este es un calentao de esos pronósticos hechos en días anteriores, así sea para eviar el predecible "el resultado siempre es obvio cuando se conoce". Como de costumbre, cada ingrediente es abierto y reproducible hasta donde su cocinero lo permite.
+
+No cualquier lista o proporción de votos es un pronóstico. Si escudriñando una lista cualquiera no resulta nada más que un "me parece que así va a ser", esa lista no cuenta. [Esto](https://twitter.com/Rohgal/status/995309564357640192), por ejemplo, no es un pronóstico. [`#LaPollaporlaPrimeraVuelta`](https://twitter.com/hashtag/LaPollaDeLaPrimeraVuelta?src=hash) que se hace en Twitter tampoco vale. La tiranía metodológica no es capricho ni arbitrariedad: simplemente no tiene sentido atribuirle nada más que suerte a alguien que se gana la lotería por escoger un número entre billones posibles. De eso no se aprende nada.
+
+Todo lo demás vale mientras resulte en un punto o intervalo por candidato. No importa la metodología que se utilice mientras haya un documento verificable que la describa, ese documento esté en línea y sea de acceso público. Los pronósticos se pueden basar en encuestas, elecciones pasadas, alianzas políticas, en el clima, clicks en una página o en cualquier otra cosa mientras cumplan con las tres características anteriores.
+
+Buen provecho y acuérdese de votar por el que le de la gana.
+
+***
+
+## El calentao
+<br>
+Este calentao incluye todos los pronósticos que encontré. El primer ingrediente es una referencia: *Encuestas*, un promedio simple de la intención de voto, para cada candidato, entre todas las 18 encuestas que han salido desde las elecciones legislativas de marzo 11 de 2017. Los otros ingredientes son estimaciones puntuales, intervalos, o puntos e intervalos, dependiendo de lo que cada cocinero haya revelado.  
+
+```{r, echo=FALSE, message=FALSE}
+library(tidyverse)
+library(RCurl)
+
+# 1. Base: promedio de las encuestas
+encuestas <- read.csv(text=getURL("https://raw.githubusercontent.com/nelsonamayad/Elecciones-presidenciales-2018/master/Elecciones%202018/encuestas2018.csv"))
+encuestas <- encuestas %>% filter(n>26) %>% select(ivan_duque,gustavo_petro,sergio_fajardo,german_vargas_lleras,humberto_delacalle) %>% gather(candidato, int_voto)
+encuestas <- encuestas %>% group_by(candidato) %>% summarize(int_voto=mean(int_voto) %>% format(digits=0))
+encuestas <- tribble(~fecha,~candidato,~int_voto,
+                "2018-05-19","Iván Duque",37,
+                "2018-05-19","Gustavo Petro",27,
+                "2018-05-19","Sergio Fajardo",13,
+                "2018-05-19","Germán Vargas Lleras",8,
+                "2018-05-19","Humberto de la Calle",3)
+encuestas$fuente <- "18 Encuestas"
+
+# 2. Cifras y Conceptos
+cyc <- tribble(~fecha, ~candidato, ~int_voto_max,~int_voto_min,
+               "2018-04-04","Iván Duque",37.7,37.2,
+               "2018-04-04","Gustavo Petro",17.4,15.7,
+               "2018-04-04","Sergio Fajardo",13.3,12.8,
+               "2018-04-04","Germán Vargas Lleras",21.0,18.2,
+               "2018-04-04","Humberto de la Calle",6.3,5.9,
+               "2018-04-18","Iván Duque",36.4,35.6,
+               "2018-04-18","Gustavo Petro",18.9,17,
+               "2018-04-18","Sergio Fajardo",12.4,12.3,
+               "2018-04-18","Germán Vargas Lleras",23.8,20.9,
+               "2018-04-18","Humberto de la Calle",5.1,4.8,
+               "2018-04-18","Iván Duque",36.9,33.7,
+               "2018-04-18","Gustavo Petro",21.6,20.8,
+               "2018-04-18","Sergio Fajardo",14.2,11.3,
+               "2018-04-18","Germán Vargas Lleras",24.1,20.8,
+               "2018-04-18","Humberto de la Calle",5.1,3.3,
+               "2018-05-16","Iván Duque",36.9,32.9,
+               "2018-05-16","Gustavo Petro",19.9,16.8,
+               "2018-05-16","Sergio Fajardo",15.5,12.6,
+               "2018-05-16","Germán Vargas Lleras",23.5,20.3,
+               "2018-05-16","Humberto de la Calle",5,3.4
+               )
+cyc <- cyc %>% mutate(int_voto=(int_voto_max+int_voto_min)*0.5)
+cyc$fuente <- "Cifras y Conceptos" 
+
+# 3. El País
+elpais <- tribble(~fecha,~candidato,~int_voto,
+                  "2018-05-19","Sergio Fajardo",15.8,
+                  "2018-05-19","Gustavo Petro",27,
+                  "2018-05-19","Iván Duque",37,
+                  "2018-05-19","Humberto de la Calle",3,
+                  "2018-05-19","Germán Vargas Lleras",10.5)
+elpais$fuente <- "El País"
+  
+# 4. ANIF
+anif <- tribble(~fecha,~candidato,~int_voto,
+      "2018-05-07","Iván Duque",(5/17)*100,
+      "2018-05-07","Germán Vargas Lleras",(4.5/17)*100,
+      "2018-05-07","Gustavo Petro",(3.2/17)*100,
+      "2018-05-07","Sergio Fajardo",(2.3/17)*100,
+      "2018-05-07","Humberto de la Calle",(1/17)*100)
+
+anif$fuente <- "ANIF"
+
+# 5. Recetas propias
+recetas <- tribble(~fecha, ~candidato,~fuente,~int_voto,~int_voto_max,~int_voto_min,
+    "2018-05-20","Sergio Fajardo","Simple",15.9,17.2,14.4,
+    "2018-05-20","Gustavo Petro","Simple",27.5,31.5,23.7,
+    "2018-05-20","Iván Duque","Simple",40.4,43.2,37.5,
+    "2018-05-2","Humberto de la Calle","Simple",2.2,3.2,1,
+    "2018-05-20","Germán Vargas Lleras","Simple",6.7,7.9,5.6,
+    "2018-05-20","Sergio Fajardo","Mixta",15.8,17.3,14.2,
+    "2018-05-20","Gustavo Petro","Mixta",30.1,33.3,26.9,
+    "2018-05-20","Iván Duque","Mixta",40.1,43.2,38.7,
+    "2018-05-20","Humberto de la Calle","Mixta",2,3.2,1.1,
+    "2018-05-20","Germán Vargas Lleras","Mixta",7.2,8.6,5.8)
+
+# Preparar calentao
+calentao <- bind_rows(encuestas,recetas,cyc %>% filter(fecha==as.Date("2018-05-16")),anif,elpais)
+calentao <- calentao %>% mutate(candidato=factor(candidato,levels=c("Humberto de la Calle","Germán Vargas Lleras","Sergio Fajardo","Gustavo Petro","Iván Duque")))
+```
+
+```{r, echo=FALSE, message=FALSE, fig.width=9, fig.align="center"}
+
+library(tidyverse)
+
+colores <- c("green4","gold2","purple3", "darkturquoise","firebrick1","firebrick1")
+shape <- c(12,18,17,15,10,8)
+
+# El calentao
+ggplot(calentao, aes(x=candidato,y=int_voto))+
+  geom_point(aes(shape=fuente,color=fuente),size=4,position = position_dodge(0.5))+
+  geom_errorbar(aes(ymax=int_voto_max,ymin=int_voto_min,color=fuente),position = position_dodge(0.5),width=0.5)+
+  theme(legend.position = "right",
+        legend.title = element_blank(),
+        legend.key=element_blank(),
+        legend.text=element_text(size=11),
+        axis.text=element_text(size=11),
+        panel.background=element_rect(fill="white",color="white"))+
+  labs(x="",y="\n% votos pronosticados/estimados por candidato",
+       title="Calentao",
+       subtitle="Pronósticos  y promedios para la primera vuelta",
+       caption="\nFuente: Cálculos @nelsonamayad con base en múltiples fuentes")+
+    scale_color_manual(values=c("red4","red2","green4","gold2","orangered")) +
+  scale_fill_manual(values=c("red4","red2","green4","gold2","orangered"))+
+  scale_y_continuous(limits = c(0,50),breaks=c(10,20,30,40,50))+
+  scale_shape_manual(values=shape)+
+  scale_color_manual(values=colores) +
+  scale_fill_manual(values=colores) +
+  coord_flip()
+```
+
+Estas son algunas generalidades del calentao:
+
+- _**Nadie gana las elecciones en primera vuelta.**_ Ningún pronóstico le da más de 50% de la votación a un candidato. El primer resultado general es que habrá segunda vuelta.
+
+- _**Iván Duque pasa a segunda vuelta.**_ Ningún pronóstico sugiere que el candidato de la coalición de derecha no pasa a la segunda vuelta, y que pasa con la mayor votación.
+
+- _**A Duque lo acompaña Petro, según las encuestas, o Vargas Lleras, según las otras recetas.**_ Hay dos tipos de recetas: las que se basan solo en encuestas y las otras. Todas las que se basan en encuestas dan el mismo resultado, en términos del órden de votación, a pesar de las enormes diferencias metodológicas y que algunas no especifican incertidumbre sobre la votación. Las que no se basan solo en las encuestas pronostican una carrera pareja entre Petro y Vargas Lleras por el segundo puesto para la segunda vuelta.  
+
+- _**No hubo un solo modelo probabilístico para la primera vuelta.**_ Lo más cercano fue la receta de ANIF, donde se presentan unas probabilidades de quién gana las elecciones. Sin embargo, lo que hizo ANIF no parece ser realmente un pronóstico probabilístico porque le da 0% de probabilidad a Fajardo y no presenta ningún intervalo de incertidumbre -ambas señales de que esa receta pretende ser una cosa que no es. 
+
+***
+
+#### *Recetas propias*
+<br>
+Estos son los resultados de las últimas estimaciones de las recetas bayesianas [Simple](https://nelsonamayad.github.io/simple/simple) y [Mixta](https://nelsonamayad.github.io/mixto/mixto). Tomo el promeio de la distribución posterior que resulta de cada receta, así como su [HPDI](https://en.wikipedia.org/wiki/Credible_interval) de 90%. No alcancé a terminar la receta multinomial, así que quedaron solo estas dos.
+<br>
+<br>
+```{r, echo=FALSE, message=FALSE, fig.width=9, fig.height=4}
+library(tidyverse)
+
+recetas <- recetas %>% mutate(candidato=factor(candidato,levels=c("Humberto de la Calle","Germán Vargas Lleras","Sergio Fajardo","Gustavo Petro","Iván Duque")))
+
+# Grafica
+ggplot(recetas, aes(x=candidato, group=candidato, color=candidato))+
+  geom_errorbar(aes(ymax=int_voto_max, ymin=int_voto_min),width=0.5)+
+  geom_point(aes(y=int_voto, shape=candidato), size=5)+
+  theme(legend.position="none",
+        axis.title.y = element_text(size=10),
+        axis.title.x = element_text(size=10),
+        panel.background=element_rect(fill="white",color="white"),text = element_text(size=15))+
+  labs(x="",y="\nMedianas e intervalos de 90% estimados", title="Pronóstico recetas propias", subtitle="Modelos bayesianos propios basados en encuestas",caption="\nFuente: @nelsonamayad")+
+  scale_color_manual(values=c("orangered","gold2","green4","red2","red4")) +
+  scale_fill_manual(values=c("orangered","gold2","green4","red2","red4"))+
+  scale_y_continuous(limits = c(0,50),breaks=c(10,20,30,40,50))+   coord_flip()+
+  facet_wrap(~fuente)
+```
+
+#### *Los huevos de Cifras y Conceptos*
+<br>
+El polémico pronóstico de Cifras y Conceptos es el ingrediente más creativo del calentao. Trata de hacer algo que ningún otro intentó: modelar el sesgo, que parece comparten todas las encuestas, de subestimar la movilización de votos que pueden hacer las estructuras políticas. [Ésta es la metodología que utilizan](https://drive.google.com/file/d/1cPCg5-YhmwpugR1_f2agdAZKxQMC-Zpq/view) para generar los intervalos de pronóstico por candidato. A pesar de que publicaron la metodología tarde, y no se animaron a mostrar la cocina completa, este ingrediente es el que más me gusta.
+
+Abajo va una reproducción de todas las actualizaciones de los intervalos que ha producido Cifras y Conceptos:
+<br>
+<br>
+```{r, echo=FALSE, message=FALSE, fig.width=9, fig.height=4}
+library(tidyverse)
+cyc <- cyc %>% mutate(candidato=factor(candidato,levels=c("Iván Duque","Germán Vargas Lleras","Gustavo Petro","Sergio Fajardo","Humberto de la Calle")))
+
+# Grafica
+ggplot(cyc, aes(x=fecha, group=candidato, color=candidato))+
+  geom_linerange(aes(ymax=int_voto_max, ymin=int_voto_min))+
+  geom_line(aes(y=int_voto_max))+
+  geom_line(aes(y=int_voto_min))+
+  theme(legend.position="right",
+        legend.title = element_blank(),
+        legend.key=element_blank(),
+        axis.title.y = element_text(size=10),
+        axis.title.x = element_text(size=10),
+        panel.background=element_rect(fill="white",color="white"),text = element_text(size=15))+
+scale_y_continuous(limits = c(0,40),breaks=c(10,20,30,40))+  labs(x="",y="Intervalos estimados",title="Pronóstico Cifras y Conceptos",subtitle="Modelo basado en encuestas y alianzas políticas",caption="Fuente: Cifras y Conceptos")+
+  scale_color_manual(values=c("orangered","red2","gold2","green4","red4")) +
+  scale_fill_manual(values=c("orangered","red2","gold2","green4","red4"))
+```
+
+#### *El chicharrón de El País*
+<br>
+Desde el periódico El País, [`@JorgeGalindo`](https://twitter.com/JorgeGalindo) y [`@kikollan`](https://twitter.com/kikollan) publicaron el 19 de mayo [un cálculo con base en las encuestas y múltiples asteríscos metodológicos](https://elpais.com/internacional/2018/05/19/colombia/1526755167_362126.html).
+
+El cálculo hace muchos supuestos de ponderación pero no los muestra, y aunque describen lo que hacen, esa transparencia a medias no me gusta. De todas maneras ahí está.
+<br>
+<br>
+```{r, echo=FALSE, message=FALSE, fig.width=9, fig.height=4}
+library(tidyverse)
+
+elpais <- elpais %>% mutate(candidato=factor(candidato,levels=c("Humberto de la Calle","Germán Vargas Lleras","Sergio Fajardo","Gustavo Petro","Iván Duque")))
+
+# Grafica
+ggplot(elpais,aes(x=candidato,color=candidato))+
+  geom_point(aes(y=int_voto,shape=candidato),size=4)+
+  geom_text(aes(y=int_voto,label=format(int_voto,digits=0)),vjust=-1)+
+  theme(legend.position="none",
+        
+        axis.title.y = element_text(size=10),
+        axis.title.x = element_text(size=10),
+        panel.background=element_rect(fill="white",color="white"),text = element_text(size=15))+
+scale_y_continuous(limits = c(0,50),breaks=c(10,20,30,40,50))+  labs(x="",y="% votos pronosticados",title="Pronóstico El País",subtitle="Promedio de encuestas",caption="Fuente: El País")+
+  scale_color_manual(values=c("red4","red2","green4","gold2","orangered")) +
+  scale_fill_manual(values=c("red4","red2","green4","gold2","orangered"))+
+  coord_flip()
+```
+
+#### *La kielbasa de ANIF*
+<br>
+[ANIF publicó éste pronóstico](http://www.anif.co/sites/default/files/1410.pdf) el pasado 7 de mayo. Cumple con los criterios de inclusión en el calentao. Pero lo único peor a saber cómo se prepara una salchicha es no saber.
+
+En este calentao solo se incluye lo que llaman *método de contabilidad de votos* porque lo demás es un buen ejemplo de rigor impostado: probabilidades sin interalos y sin rastro de cómo se calculan. ANIF dice que Duque tiene "65% de probabilidad de ganar" pero no muestra exactamente cómo llegaron a esa conclusión (¿por qué 65% y no 56%, o 73%? Ni idea). Eso no se puede incluir en el calentao.
+<br>
+<br>
+```{r, echo=FALSE, message=FALSE, fig.width=9, fig.height=4}
+library(tidyverse)
+
+anif <- anif %>% mutate(candidato=factor(candidato,levels=c("Humberto de la Calle","Sergio Fajardo","Gustavo Petro","Germán Vargas Lleras","Iván Duque")))
+
+# Grafica
+ggplot(anif,aes(x=candidato,color=candidato))+
+  geom_point(aes(y=int_voto,shape=candidato),size=4)+
+  geom_text(aes(y=int_voto,label=format(int_voto,digits=0)),vjust=-1)+
+  theme(legend.position="none",
+        axis.title.y = element_text(size=10),
+        axis.title.x = element_text(size=10),
+        panel.background=element_rect(fill="white",color="white"),text = element_text(size=15))+
+scale_y_continuous(limits = c(0,40),breaks=c(10,20,30,40))+  labs(x="",y="% votos pronosticados",title="Pronóstico ANIF",subtitle="Modelo de contabilidad de votos",caption="Fuente: ANIF")+
+  scale_color_manual(values=c("red4","green4","gold2","red2","orangered")) +
+  scale_fill_manual(values=c("red4","green4","gold2","red2","orangered"))+
+  coord_flip()
+```
+
