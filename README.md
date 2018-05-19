@@ -7,3 +7,5 @@
 3. [_**Plato Simple**_](https://nelsonamayad.github.io/simple): primera receta para un modelo bayesiano lineal que sigue las pocas encuestas de intencion de voto para cada candidato, e incluye efectos aleatorios por encuestadora para el intercepto. Permite un pronóstico básico, completamente transparente y replicable usando sólo información pública. Preparada con [Stan](http://mc-stan.org/users/interfaces/rstan.html).
 
 4. [_**Plato Mixto**_](https://nelsonamayad.github.io/mixto): esta segunda receta es mejor que la primera, pero más complicada: introduce efectos aleatorios para interceptos y pendientes a la receta Simple. Se ajusta mejor a los datos de las encuestas para todos los candidatos. Preparada con [Stan](http://mc-stan.org/users/interfaces/rstan.html).
+
+5. [_**Calentao**_](https://nelsonamayad.github.io/calentao/calentao): Este es un plato con todos los pronósticos, promedios y modelos que encontré y que se publicaron antes de la primera vuelta. Incluye los resultados de los platos Simple y Mixto, los pronósticos de Cifras y Conceptos, ANIF, El País y un promedio entre las encuestas como referencia.
