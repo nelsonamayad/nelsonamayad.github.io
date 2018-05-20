@@ -39,7 +39,7 @@ Buen provecho
 
 ## Plato
 <br>
-Primero veamos cómo se comparan los resultados del segundo plato *mixto* con los del primer plato [*simple* ](https://nelsonamayad.github.io/simple/simple). Solo se comparan los promedios para facilitar la visualización; eso no significa que cada punto del plato mixto no tenga su correspondiente intervalo de credibilidad, solo que ese intervalo no se muestra. 
+Primero veamos cómo se comparan los resultados del segundo plato *mixto* con los del primer plato [*simple* ](https://nelsonamayad.github.io/simple/simple). En ambos casos el resultado es el promedio de la estimación de los parámetros y el HPDI de 90% de cada uno.
 
 *Los valores cambian con cada estimación*. Eso refleja la incorporación de nueva información y la forma como la receta los procesa. 
 
@@ -48,16 +48,16 @@ Primero veamos cómo se comparan los resultados del segundo plato *mixto* con lo
 library(tidyverse)
 #Platos 1 y 2:
 platos <- tribble(~candidato,~int_voto,~int_voto_max,~int_voto_min,~m_03.2018,~plato,
-  "Sergio Fajardo",15.9,17.2,14.4,13.1,"Plato Simple",
-  "Gustavo Petro",27.5,31.5,23.7,26.8,"Plato Simple",
-  "Ivan Duque",40.4,43.2,37.5,38.1,"Plato Simple",
-  "Humberto de la Calle",2.2,3.2,1,3,"Plato Simple",
-  "German Vargas Lleras",6.7,7.9,5.6,6.6,"Plato Simple",
-  "Sergio Fajardo",15.8,17.3,14.2,13.1,"Plato Mixto",
-  "Gustavo Petro",30.1,33.3,26.9,26.8,"Plato Mixto",
-  "Ivan Duque",40.1,43.2,38.7,38.1,"Plato Mixto",
-  "Humberto de la Calle",2,3.2,1.1,3,"Plato Mixto",
-  "German Vargas Lleras",7.2,8.6,5.8,6.6,"Plato Mixto")
+  "Sergio Fajardo",12.4,16.8,6.7,13.1,"Plato Simple",
+  "Gustavo Petro",26.4,32.2,23.5,26.8,"Plato Simple",
+  "Ivan Duque",38.3,42.2,34,38.1,"Plato Simple",
+  "Humberto de la Calle",3.2,4.5,1.7,3,"Plato Simple",
+  "German Vargas Lleras",7.5,12.4,5.4,6.6,"Plato Simple",
+  "Sergio Fajardo",13.1,16.9,8.9,13.1,"Plato Mixto",
+  "Gustavo Petro",26.8,31.0,23.5,26.8,"Plato Mixto",
+  "Ivan Duque",38.1,41.9,34.2,38.1,"Plato Mixto",
+  "Humberto de la Calle",3.0,5.2,2.1,3,"Plato Mixto",
+  "German Vargas Lleras",7.5,11.1,5.7,6.6,"Plato Mixto")
 
 #Orden                
 platos <- platos %>% mutate(candidato=factor(candidato,levels=c("Humberto de la Calle","German Vargas Lleras","Sergio Fajardo","Gustavo Petro","Ivan Duque")),plato=factor(plato))
