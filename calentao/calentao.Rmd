@@ -74,7 +74,12 @@ cyc <- tribble(~fecha, ~candidato, ~int_voto_max,~int_voto_min,
                "2018-05-16","Gustavo Petro",19.9,16.8,
                "2018-05-16","Sergio Fajardo",15.5,12.6,
                "2018-05-16","Germán Vargas Lleras",23.5,20.3,
-               "2018-05-16","Humberto de la Calle",5,3.4
+               "2018-05-16","Humberto de la Calle",5,3.4,
+               "2018-05-20","Iván Duque",37.2,33.7,
+               "2018-05-20","Gustavo Petro",20.8,18.1,
+               "2018-05-20","Sergio Fajardo",17.3,14.6,
+               "2018-05-20","Germán Vargas Lleras",21.7,19,
+               "2018-05-20","Humberto de la Calle",4.7,3.5
                )
 cyc <- cyc %>% mutate(int_voto=(int_voto_max+int_voto_min)*0.5)
 cyc$fuente <- "Cifras y Conceptos" 
@@ -100,19 +105,19 @@ anif$fuente <- "ANIF"
 
 # 5. Recetas propias
 recetas <- tribble(~fecha, ~candidato,~fuente,~int_voto,~int_voto_max,~int_voto_min,
-    "2018-05-20","Sergio Fajardo","Simple",15.9,17.2,14.4,
-    "2018-05-20","Gustavo Petro","Simple",27.5,31.5,23.7,
-    "2018-05-20","Iván Duque","Simple",40.4,43.2,37.5,
-    "2018-05-2","Humberto de la Calle","Simple",2.2,3.2,1,
-    "2018-05-20","Germán Vargas Lleras","Simple",6.7,7.9,5.6,
-    "2018-05-20","Sergio Fajardo","Mixta",15.8,17.3,14.2,
-    "2018-05-20","Gustavo Petro","Mixta",30.1,33.3,26.9,
-    "2018-05-20","Iván Duque","Mixta",40.1,43.2,38.7,
-    "2018-05-20","Humberto de la Calle","Mixta",2,3.2,1.1,
-    "2018-05-20","Germán Vargas Lleras","Mixta",7.2,8.6,5.8)
+    "2018-05-20","Sergio Fajardo","Simple",12.4,16.8,6.7,
+    "2018-05-20","Gustavo Petro","Simple",26.4,32.2,23.5,
+    "2018-05-20","Iván Duque","Simple",38.3,42.2,34.0,
+    "2018-05-20","Humberto de la Calle","Simple",3.2,4.5,1.7,
+    "2018-05-20","Germán Vargas Lleras","Simple",7.5,12.4,5.4,
+    "2018-05-20","Sergio Fajardo","Mixta",13.1,16.9,8.9,
+    "2018-05-20","Gustavo Petro","Mixta",26.8,31.0,23.5,
+    "2018-05-20","Iván Duque","Mixta",38.1,41.9,34.2,
+    "2018-05-20","Humberto de la Calle","Mixta",3.0,5.2,2.1,
+    "2018-05-20","Germán Vargas Lleras","Mixta",7.5,11.1,5.7)
 
 # Preparar calentao
-calentao <- bind_rows(encuestas,recetas,cyc %>% filter(fecha==as.Date("2018-05-16")),anif,elpais)
+calentao <- bind_rows(encuestas,recetas,cyc %>% filter(fecha==as.Date("2018-05-20")),anif,elpais)
 calentao <- calentao %>% mutate(candidato=factor(candidato,levels=c("Humberto de la Calle","Germán Vargas Lleras","Sergio Fajardo","Gustavo Petro","Iván Duque")))
 ```
 
@@ -160,7 +165,7 @@ Estas son algunas generalidades del calentao:
 
 #### *Recetas propias*
 <br>
-Estos son los resultados de las últimas estimaciones de las recetas bayesianas [Simple](https://nelsonamayad.github.io/simple/simple) y [Mixta](https://nelsonamayad.github.io/mixto/mixto). Tomo el promeio de la distribución posterior que resulta de cada receta, así como su [HPDI](https://en.wikipedia.org/wiki/Credible_interval) de 90%. No alcancé a terminar la receta multinomial, así que quedaron solo estas dos.
+Estos son los resultados de las últimas estimaciones de las recetas bayesianas [Simple](https://nelsonamayad.github.io/simple/simple) y [Mixta](https://nelsonamayad.github.io/mixto/mixto). En cada caso, el resultado es un promedio de la distribución posterior de los parámetros, así como su [HPDI](https://en.wikipedia.org/wiki/Credible_interval) de 90%. No alcancé a terminar la receta multinomial, así que quedaron solo estas dos.
 <br>
 <br>
 ```{r, echo=T, message=FALSE, fig.width=9, fig.height=4}
@@ -176,9 +181,9 @@ ggplot(recetas, aes(x=candidato, group=candidato, color=candidato))+
         axis.title.y = element_text(size=10),
         axis.title.x = element_text(size=10),
         panel.background=element_rect(fill="white",color="white"),text = element_text(size=15))+
-  labs(x="",y="\nMedianas e intervalos de 90% estimados", title="Pronóstico recetas propias", subtitle="Modelos bayesianos propios basados en encuestas",caption="\nFuente: @nelsonamayad")+
-  scale_color_manual(values=c("orangered","gold2","green4","red2","red4")) +
-  scale_fill_manual(values=c("orangered","gold2","green4","red2","red4"))+
+  labs(x="",y="\nPromedios e intervalos HPD de 90%", title="Pronóstico recetas propias", subtitle="Modelos bayesianos propios basados en encuestas",caption="\nFuente: @nelsonamayad")+
+  scale_color_manual(values=c("red4","red2","green4","gold2","orangered")) +
+  scale_fill_manual(values=c("red4","red2","green4","gold2","orangered"))+
   scale_y_continuous(limits = c(0,50),breaks=c(10,20,30,40,50))+   coord_flip()+
   facet_wrap(~fuente)
 ```
@@ -199,6 +204,7 @@ ggplot(cyc, aes(x=fecha, group=candidato, color=candidato))+
   geom_linerange(aes(ymax=int_voto_max, ymin=int_voto_min))+
   geom_line(aes(y=int_voto_max))+
   geom_line(aes(y=int_voto_min))+
+  #Texto
   theme(legend.position="right",
         legend.title = element_blank(),
         legend.key=element_blank(),
@@ -227,7 +233,6 @@ ggplot(elpais,aes(x=candidato,color=candidato))+
   geom_point(aes(y=int_voto,shape=candidato),size=4)+
   geom_text(aes(y=int_voto,label=format(int_voto,digits=0)),vjust=-1)+
   theme(legend.position="none",
-        
         axis.title.y = element_text(size=10),
         axis.title.x = element_text(size=10),
         panel.background=element_rect(fill="white",color="white"),text = element_text(size=15))+
