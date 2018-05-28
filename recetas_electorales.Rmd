@@ -11,7 +11,7 @@ Twitter: [`@nelsonamayad`](https://twitter.com/NelsonAmayaD)
 <br>
 Publicación: **24-04-2018**
 <br>
-Última actualización: **19-05-2018**
+Última actualización: **28-05-2018**
 <br>
 
 ***
@@ -33,10 +33,17 @@ df <- df %>% rename(m_error = margen_error)
 df <- df %>% select(-n) %>% gather(candidato, int_voto, ivan_duque,gustavo_petro,sergio_fajardo,german_vargas_lleras,humberto_delacalle)
 df <- df %>% mutate(e_max = int_voto+m_error,e_min=int_voto-m_error,fecha=as.Date(fecha))
 df <- df %>% transform(candidato=factor(candidato, levels=c("ivan_duque","gustavo_petro","sergio_fajardo","german_vargas_lleras","humberto_delacalle")))
-                       
+  
+resultado <- tribble(~fecha,~candidato,~int_voto,
+      "2018-05-27","ivan_duque",39.14,
+      "2018-05-27","german_vargas_lleras",7.28,
+      "2018-05-27","gustavo_petro",25.08,
+      "2018-05-27","sergio_fajardo",23.73,
+      "2018-05-27","humberto_delacalle",2.06)
+
 # Caracteristicas graficas ####
 shape_enc <- c(4,16,17,3,15,25,8)
-subtitle <- c("30 encuestas durante 2018, 18 desde las elecciones legislativas del 11 de marzo de 2018. \nCurva LOESS ponderada por el tamaño de la muestra de cada encuesta.")
+subtitle <- c("30 encuestas durante 2018, 18 desde las elecciones legislativas del 11 de marzo de 2018 y resultado 27 de mayo. \nCurva LOESS ponderada por el tamaño de la muestra de cada encuesta.")
 fuente <- c("Fuente: Cálculos @nelsonamayad con base en las encuestas públicamente disponibles.")
 legis <-  geom_vline(xintercept=as.Date("2018-03-11"), size=0.1,linetype="dashed")
 
@@ -49,7 +56,7 @@ ggplot(df,aes(x=fecha, y=int_voto)) +
   #Error
   geom_linerange(aes(ymax=e_max, ymin=e_min),color="grey60") +
   #Legislativas
-  legis+
+  #legis+
   #Labs
   labs(x="",y="Intencion de voto %",
        title="La única alternativa al chisme y la intuición:", 
@@ -63,11 +70,13 @@ ggplot(df,aes(x=fecha, y=int_voto)) +
         strip.text.x = element_text(size=10),
         strip.background=element_blank()) +
   #Facets
-  facet_wrap(~candidato, nrow=1, labeller=labeller(candidato=c("gustavo_petro"="Gustavo Petro", "ivan_duque"="Ivan Duque", "sergio_fajardo"="Sergio Fajardo","german_vargas_lleras"="German Vargas Lleras","humberto_delacalle"="Humberto de la Calle"))) +
-  #Scales
+  facet_wrap(~factor(candidato,levels=c("ivan_duque","gustavo_petro", "sergio_fajardo","german_vargas_lleras","humberto_delacalle")),labeller=labeller(candidato=c("gustavo_petro"="Gustavo Petro", "ivan_duque"="Ivan Duque", "sergio_fajardo"="Sergio Fajardo","german_vargas_lleras"="German Vargas Lleras","humberto_delacalle"="Humberto de la Calle")), nrow=1) +
+   #Scales
   scale_color_manual(values=c("orangered","gold2","green4","red2","red4")) +
   scale_fill_manual(values=c("orangered","gold2","green4","red2","red4")) +
-  scale_shape_manual(values=shape_enc)
+  scale_shape_manual(values=shape_enc)+
+  #Resultado
+  geom_hline(data=resultado,aes(yintercept=int_voto),linetype="dashed")
 ```
 
 ## El menú:
@@ -81,7 +90,9 @@ ggplot(df,aes(x=fecha, y=int_voto)) +
 
 4. [_**Plato Mixto**_](https://nelsonamayad.github.io/mixto/mixto): esta segunda receta es mejor que la primera, pero más complicada: introduce efectos aleatorios para interceptos y pendientes a la receta simple. Se ajusta mejor a los datos de las encuestas para todos los candidatos. Preparada con [Stan](http://mc-stan.org/users/interfaces/rstan.html).
 
-5. [_**Calentao**_](https://nelsonamayad.github.io/calentao/calentao): Este es un plato con todos los pronósticos, promedios y modelos que encontré y que se publicaron antes de la primera vuelta. Incluye los resultados de los platos Simple y Mixto, los pronósticos de Cifras y Conceptos, ANIF, El País y un promedio entre las encuestas como referencia. 
+5. [_**Calentao de pronósticos**_](https://nelsonamayad.github.io/calentao/calentao): Este es un plato con todos los pronósticos, promedios y modelos que encontré y que se publicaron antes de la primera vuelta. Incluye los resultados de los platos Simple y Mixto, los pronósticos de Cifras y Conceptos, ANIF, El País y un promedio entre las encuestas como referencia. 
+
+6. [_**Caldo post electoral**_](https://nelsonamayad.github.io/caldo/caldo): Comparación entre los pronósticos y los resultados a la primera vuelta. Ganador: las encuestas y el [plato Mixto](https://nelsonamayad.github.io/mixto/mixto).
 
 ***
 ## ¿Qué se puede aprender de las encuestas? 
