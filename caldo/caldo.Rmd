@@ -25,7 +25,7 @@ knitr::opts_chunk$set(echo = TRUE)
 <br>
 Este es el último plato de la primera vuelta: un contraste de los pronósticos y los resultados.
 
-Fue un buen día para las encuestas y, claro, para las recetas basadas en encuestas. El mejor pronóstico fue el que resultó de la receta bayesiana [Mixta](https://nelsonamayad.github.io/mixto/mixto). Solo fracasó en identificar la proporción de votos de Sergio Fajardo, la sorpresa de la jornada, pero acertó para todos los otros candidatos. Más que cualquier otro pronóstico y que cualquier encuesta individual. 
+Fue un buen día para las encuestas y, claro, para las recetas basadas en encuestas. El mejor pronóstico fue el que resultó de las recetas bayesianas [Simple](https://nelsonamayad.github.io/simple/simple) y [Mixta](https://nelsonamayad.github.io/mixto/mixto). Solo fracasaron en identificar la proporción de votos de Sergio Fajardo, la sorpresa de la jornada, pero acertaron para todos los otros candidatos. Más que cualquier otro pronóstico y que cualquier encuesta individual.
 
 **En conclusión: las encuestas son valiosas y su valor se determina conjuntamente, no por separado.**
 
