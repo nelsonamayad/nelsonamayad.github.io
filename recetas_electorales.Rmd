@@ -11,7 +11,7 @@ Twitter: [`@nelsonamayad`](https://twitter.com/NelsonAmayaD)
 <br>
 Publicación: **24-04-2018**
 <br>
-Última actualización: **06-06-2018** Bienvenidos a la 2da vuelta
+Última actualización: **06-06-2018** 
 <br>
 
 ***
@@ -19,7 +19,7 @@ Publicación: **24-04-2018**
 - [Judea Pearl](http://bayes.cs.ucla.edu/jp_home.html)
 <br>
 
-```{r, echoe=FALSE,message=FALSE,fig.width = 6, fig.align = "center"}
+```{r, echoe=FALSE,message=FALSE,fig.width = 7, fig.align = "center"}
 library(RCurl)
 library(tidyverse)
 
@@ -108,6 +108,8 @@ ggplot(df2,aes(x=fecha, y=int_voto)) +
 ## ¿Qué se puede aprender de las encuestas? 
 <br>
 
+[El que ignora las encuestas se pierde de mucho](https://nelsonamayad.github.io/caldo/caldo).
+
 La respuesta de [La Silla Vacía (LSV)](http://lasillavacia.com/blogs/la-carrera-de-caballos-en-la-silla-62772) es categórica: no se puede aprender nada. Y puede que tengan razón: las encuestas se han descachado en casi todas las elecciones en las que se han utilizado para pronosticar el resultado. A veces se descachan en la dirección: en un ejercicio de estadística con las ganas, [The Upshot del New York Times le dió 85% de probabilidad de ganar a Hillary Clinton en la víspera de las elecciones de 2016](https://www.nytimes.com/interactive/2016/upshot/presidential-polls-forecast.html). Otras veces se descachan en tamaño: aunque las encuestas en Francia siempre dieron a Macron como ganador sobre Le Pen, [tuvieron un sesgo de más de 10 pp del resultado final](https://fivethirtyeight.com/features/macron-won-but-the-french-polls-were-way-off/). 
 
 Hay otra posibilidad, otra explicación a la posición de LSV. Es simple: los medios de comunicación [parecen ser incapaces de lidiar con probabilidades](https://fivethirtyeight.com/features/the-media-has-a-probability-problem/). Tienden a malinterpretar los datos, a clasificar como certero lo incierto y a simplificar indebidamente la información disponible para que quepa en una narrativa fácil de digerir. Dice LSV sobre las encuestas: "Nuestro razonamiento es que si en realidad *no son un instrumento totalmente confiable* para sondear la intención electoral de los colombianos, *cualquier análisis* que haga La Silla con base en ellas más que informar puede despistar" (énfasis añadido). Es comprehensible que los medios no sepan cómo escudriñar una encuesta, o cómo representar un pronóstico probabilístico; al fin y al cabo eso es difícil de hacer. Pero hay algo profundamente equivocado en creer que cualquier análisis que se haga sobre un instrumento imperfecto solo puede despistar o está hecho con ese propósito.
@@ -116,7 +118,7 @@ Otros medios como la revista Semana no han ni siquiera descubierto su propia ign
 
 Me gusta el trabajo de LSV, y [lo que han preparado para las elecciones es bueno](http://lasillavacia.com/elecciones2018#/la-maquinaria). Pero su racionalización sobre las encuestas es equivocada y perezosa.
 
-Las encuestas son la única alternativa a la intuición y el chisme. Tienen errores, algunos explícitos y otros implícitos. Usan diferentes metodologías y estrategias muestrales, unas mejores que otras. Algunas revelan la tasa de respuesta; otras se la guardan. [Las muestras que toman son demasiado pequeñas para identificar diferencias pequeñas](https://nelsonamayad.github.io/poder/poder). Hay muchas razones para cuestionar, incluso desconfiar, de las encuestas. Pero hay más razones para desconfiar de analistas y columnistas: a la carreta casi nunca se le lleva contabilidad.
+Las encuestas son la única alternativa a la intuición y el chisme. Tienen errores, algunos explícitos y otros implícitos. Usan diferentes metodologías y estrategias muestrales, unas mejores que otras. Algunas revelan la tasa de respuesta; otras se la guardan. [Las muestras que toman muy pequeñas para identificar señales silenciosas](https://nelsonamayad.github.io/poder/poder). Hay muchas razones para cuestionar, incluso desconfiar, de las encuestas. Pero hay más razones para desconfiar de analistas y columnistas: a la carreta casi nunca se le lleva contabilidad.
 
 No creo que uno pueda criticar sin ofrecer una alternativa. Así que preparé un menú con bases estadísticas rigurosas, datos abiertos, código replicable y preparado con software open-source para hacerle seguimiento a las encuestas. **Es la única manera de hacer estadística creíble**. La idea es llenar un espacio, bueno, vacío: reconocer que en las encuestas puede haber información valiosa, y que sólo en conjunto se puede aproximar su valor, cualquiera que sea. Ese espacio no se puede llenar con [índices pomposos sin detalles](https://www.semana.com/opinion/articulo/la-volatilidad-de-las-preferencias-electorales-columna-de-juan-fernando-londono/562333), salsas secretas ni subterfugios estadísticos.
 
