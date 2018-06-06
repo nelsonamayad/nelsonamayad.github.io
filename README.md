@@ -10,4 +10,4 @@
 
 5. [_**Calentao**_](https://nelsonamayad.github.io/calentao/calentao): Este es un plato con todos los pronósticos, promedios y modelos que encontré y que se publicaron antes de la primera vuelta. Incluye los resultados de los platos Simple y Mixto, los pronósticos de Cifras y Conceptos, ANIF, El País y un promedio entre las encuestas como referencia.
 
-6. [_**Caldo post electoral**_](https://nelsonamayad.github.io/caldo/caldo): Comparación entre los pronósticos y los resultados a la primera vuelta. Ganador: las encuestas y el [plato Mixto](https://nelsonamayad.github.io/mixto/mixto).
+6. [_**Caldo post electoral**_](https://nelsonamayad.github.io/caldo/caldo): Comparación entre los pronósticos y los resultados a la primera vuelta. Ganadores: las encuestas y los platos propios.
