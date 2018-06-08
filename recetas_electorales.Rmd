@@ -86,8 +86,7 @@ ggplot(df2,aes(x=fecha, y=int_voto)) +
                              #,"green4","red2","red4"
                              )) +
   scale_shape_manual(values=shape_enc)
-  #Resultado
-  #geom_hline(data=resultado,aes(yintercept=int_voto),linetype="dashed")
+
 ```
 
 ## El menú:
