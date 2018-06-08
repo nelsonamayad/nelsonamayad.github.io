@@ -46,7 +46,7 @@ resultado <- tribble(~fecha,~candidato,~int_voto,
 
 # Caracteristicas graficas ####
 shape_enc <- c(4,16,17,3,15,25,8)
-subtitle <- c("34 encuestas durante 2018, 4 desde la primera vuelta el 27 de mayo. \nCurva LOESS ponderada por el tamaño de la muestra de cada encuesta.")
+subtitle <- c("35 encuestas durante 2018, 5 desde la primera vuelta el 27 de mayo. \nCurva LOESS ponderada por el tamaño de la muestra de cada encuesta.")
 fuente <- c("Fuente: Cálculos @nelsonamayad con base en las encuestas públicamente disponibles.")
 legis <-  geom_vline(xintercept=as.Date("2018-03-11"), size=0.1,linetype="dashed")
 pv <-  geom_vline(xintercept=as.Date("2018-05-27"), size=0.1,linetype="dashed")
