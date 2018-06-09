@@ -110,7 +110,7 @@ ggplot(df2,aes(x=fecha, y=int_voto)) +
 
 [El que ignora las encuestas se pierde de mucho](https://nelsonamayad.github.io/caldo/caldo).
 
-Desafortunadamente algunos saben la respuesta antes de que sea posible responderla. [La Silla Vacía (LSV)](http://lasillavacia.com/blogs/la-carrera-de-caballos-en-la-silla-62772) es categórica sobre las encuestas: no se puede aprender nada de los sondeos. 
+Algunos clarividentes saben la respuesta antes de que sea posible responderla. No dan lugar a la duda. Por ejemplo, [La Silla Vacía (LSV)](http://lasillavacia.com/blogs/la-carrera-de-caballos-en-la-silla-62772) es categórica sobre las encuestas: no se puede aprender nada de los sondeos. 
 
 Puede que LSV tenga razón: las encuestas se han descachado en casi todas las elecciones en las que se han utilizado para pronosticar el resultado. A veces se descachan en la dirección: en un ejercicio de estadística con las ganas, [The Upshot del New York Times le dió 85% de probabilidad de ganar a Hillary Clinton en la víspera de las elecciones de 2016](https://www.nytimes.com/interactive/2016/upshot/presidential-polls-forecast.html). Otras veces se descachan en tamaño: aunque las encuestas en Francia siempre dieron a Macron como ganador sobre Le Pen, [tuvieron un sesgo de más de 10 pp del resultado final](https://fivethirtyeight.com/features/macron-won-but-the-french-polls-were-way-off/). 
 
