@@ -1,0 +1,242 @@
+---
+title: "Plato, cocina, receta, ingredientes #5"
+subtitle: "Plato logístico para la 2da vuelta"
+author: "Nelson Amaya"
+output: 
+  html_document:
+      theme: readable
+      code_folding: hide
+---
+<br>
+Twitter: [`@nelsonamayad`](https://twitter.com/NelsonAmayaD)
+<br>
+Publicación: **10-06-2018**
+<br>
+<br>
+```{r setup, include=FALSE}
+options(Encoding="UTF-8")
+knitr::opts_chunk$set(echo = TRUE)
+```
+> *"The signal is the truth"*<br>
+- [Nate Silver](https://www.amazon.com/Signal-Noise-Many-Predictions-Fail-but/dp/0143125087)
+
+<br>
+Llegó la hora de ver si la presidencia de Colombia en 2018 queda en cabeza de [`@IvanDuque`](https://twitter.com/IvanDuque) o [`@GustavoPetro`](https://twitter.com/GustavoPetro). Ya se hizo la tarea para la primera vuelta y [los resultados fueron muy buenos](https://nelsonamayad.github.io/caldo/caldo), a pesar de que no capturaron la sorpresa fajardista que le sacó varios puntos a Petro y a De la Calle en la última semana.
+
+Este último plato busca lograr lo que los anteriores no pudieron: estimar qué tan probable es que gane uno u otro candidato. Para hacer eso este plato le aplica una transformación sencillita al plato [Simple](https://nelsonamayad.github.io/mixto/mixto): en vez de servir dos recetas por candidato, se sirve una sola [logística](https://en.wikipedia.org/wiki/Logistic_regression) para ambos. Esto permite generar un pronóstico probabilístico para la segunda vuelta.
+
+¿Por qué hacerlo así? Porque según las encuestas la victoria es para Duque: todas coinciden en que el candidato de la coalición de derecha obtiene una mayor proporción de votos que su contrincante. Es más, el resultado del [plato mixto](https://nelsonamayad.github.io/mixto/mixto), al que mejor le fue en la primera vuelta, aplicado a las encuestas que salieron después del 27 de mayo da como resultado que **Duque obtendrá 51% de la votación, con un rango intervalo HPD de 95% de entre 46% y 57%, y Petro obtendría 37%, con un rango HPD de 95% entre 34% y 41%**. Así que en vez de decir lo obvio, nos vamos por lo menos evidente, aunque sea más difícil de masticar.
+
+Buen provecho.
+
+***
+
+## Plato Logis
+<br>
+Este plato recoge la probabilidad de que [`@IvanDuque`](https://twitter.com/IvanDuque) sea presidente, estimada por el modelo que se describe abajo. 
+
+Estas probabilidades salen de sacar muchas simulaciones de cada uno de los parámetros del modelo estimado. El resultado es una densidad de la probabilidad de que Duque obtenga más de 50% de la votación. La distribución parece bimodal porque unas encuestas le dan menos de 50% de la votación a Duque, pero el grueso dice lo contrario: el 20% de las simulaciones estima que Duque gana con más o menos 53% de probabilidad.
+<br>
+```{r, echo=T, message=FALSE, fig.height=5, fig.width=6, fig.align='center'}
+library(ggplot2)
+library(RCurl)
+#Importar simulaciones
+id.4cast <- read.csv(text=getURL("https://raw.githubusercontent.com/nelsonamayad/nelsonamayad.github.io/master/logis/id4cast.csv"))
+
+#plato logis
+ggplot(id.4cast)+
+  geom_density(aes(x=id4cast,fill="orangered3",color="grey60"))+
+labs(x="Probabilidad de que Duque obtenga más de 50% de la votación",y="Densidad Probabilidades estimadas",
+       title="Plato logístico", 
+       subtitle="10.000 simulaciones del modelo logístico para la 2da vuelta", 
+       caption = "Fuente: Cálculos @nelsonamayad")+
+  theme(legend.position = "none",
+        panel.background = element_blank())+
+  xlim(0.35,0.65)
+```
+
+### Ingredientes
+<br>
+Los únicos ingredientes de esta receta son las encuestas que han salido desde la primera vuelta. Como *priors* se toman los promedios y desviaciones estándar de cada candidato.
+<br>
+```{r, echo=T, message=FALSE}
+library(tidyverse)
+library(RCurl)
+library(lubridate)
+
+# 1. Importar encuestas
+d <- read.csv(text=getURL("https://raw.githubusercontent.com/nelsonamayad/Elecciones-presidenciales-2018/master/Elecciones%202018/encuestas2018.csv"))
+
+# 2. Alistamiento de los datos
+d <- d %>% filter(n>45) %>% select(encuestadora,ivan_duque,gustavo_petro,fecha,muestra_int_voto,margen_error,tipo,municipios)
+d <- d %>% mutate(id = ivan_duque*muestra_int_voto/100, gp = gustavo_petro*muestra_int_voto/100,n=muestra_int_voto,m_error=margen_error,tipo = ifelse(d$tipo=="Presencial",1,0))
+d <- d %>% mutate(id = round(id,digits=0),gp = round(gp,digits=0))
+f <- today()    #FECHA ESPECIFICA
+d <- d %>% mutate(dd = as.Date(as.character(f), format="%Y-%m-%d") - 
+                    as.Date(as.character(fecha), format="%Y-%m-%d"))
+d <- d %>% mutate(dd = as.numeric(dd))
+d$encuestadora <- match(d$encuestadora, unique(d$encuestadora))
+```
+
+### Receta
+<br>
+Este plato modela directamente las encuestas como una distribución binomial donde cada encuesta es un ensayo:
+
+$$ N^{Duque}_i \sim \textrm{Binomial}(N_i, \pi^{Duque}_i) $$
+donde $N_i$ es la muestra de cada encuesta y $\pi^{Duque}_i$ es la proporción de la intención de voto para Iván Duque.
+
+Ahora, la proporción de intención de voto para Duque $\pi^{Duque}_i$ se determina a través de una función logística (log-link function) y, como es costumbre en este recetario, efectos aleatorios por encuestadora así:
+
+$$\textrm{logit} (\pi^{Duque}_i) = \alpha_{encuestadora}$$
+<br>
+
+## Preparación
+<br>
+Este es el plato completo, con los *priors* del caso:
+<br>
+$$ N^{Duque}_i \sim \textrm{Binomial}(N_i, \pi^{Duque}_i) $$
+$$\textrm{logit} (\pi^{Duque}_i) = \alpha_{encuestadora}$$
+$$\small\alpha_{encuestadora} \sim Normal(\alpha,\sigma) $$
+$$\small\alpha \sim Normal(50, 5) $$
+$$\small\sigma \sim HalfCauchy(0,5) $$
+<br>
+
+### Estimación en RStan
+<br>
+Este es el modelo en el siempre espeluznante código de RStan:
+<br>
+```{stan output.var="logis"}
+data{
+    int<lower=1> N;
+    int<lower=1> N_encuestadora;
+    int id[N];
+    int n[N];
+    int encuestadora[N];
+}
+parameters{
+    vector[N_encuestadora] a;
+    real<lower=0> s;
+}
+model{
+    vector[N] p;
+    s ~ cauchy( 0 , 5 );
+    a ~ normal( 0 , 10 );
+    a ~ normal( a , s );
+    for ( i in 1:N ) {
+        p[i] = a[encuestadora[i]];
+    }
+    id ~ binomial_logit( n , p );
+}
+generated quantities{
+    vector[N] p;
+    real dev;
+    dev = 0;
+    for ( i in 1:N ) {
+        p[i] = a[encuestadora[i]];
+    }
+    dev = dev + (-2)*binomial_logit_lpmf( id | n , p );
+}
+```
+<br>
+Ahora meter el plato al horno de RStan:
+<br>
+```{r results = "hide",message=FALSE}
+library(rstan)
+options(mc.cores = parallel::detectCores())
+logis_fit <- stan(file='logis.stan',data=list(N=7,N_encuestadora=6,n=d$n,encuestadora=d$encuestadora,id=d$id),control=list(adapt_delta=0.95),iter=4000,chains=4)
+```
+<br>
+Con algo de trabajo, y a pesar de muchas divergencias iniciales en el muestreo, el plato no se quema y sale del horno. 
+
+Veámos cómo se comparan los parametros estimados con los datos observados:
+<br>
+```{r results = "hide",message=FALSE, fig.height=3}
+library(tidyverse)
+
+#Muestreo de la distribucion posterior
+posterior <- as.matrix(logis_fit)
+
+# Parametros vs Observados
+ps <- posterior %>% as.tibble() %>% select(7:13) %>% summarize_all(funs(mean)) %>% t() %>% as.data.frame()
+
+# Convertir parametros con funcion inversa logistica
+inv_log <- function(x) {
+  1/(1+exp(-x))
+}
+ps <- ps %>% mutate_all(funs(inv_log))
+
+#Valores observados
+obs <- d %>% mutate(id = id/n,t=seq(from=1,to=7))
+
+#Bind
+ps_obs <- cbind(ps,obs)
+
+#Grafica
+ggplot(ps_obs, aes(x=t))+
+    geom_point(aes(y=id),size=4,color="orangered")+
+    geom_point(aes(y=ps),shape=10,size=5,color="red2")+
+    theme_classic()+labs(y="intencion de voto",x="")+
+  ylim(0.3,0.7)
+```
+<br>
+Para terminar, vamos las densidades de los parámetros estimados usando bayesplot y lanzar shinystan:
+<br>
+```{r results = "hide",message=FALSE, fig.height=3}
+#Grafica
+library(bayesplot)
+posterior <- as.matrix(logis_fit)
+color_scheme_set("orange")
+mcmc_areas(posterior,prob=0.95,prob_outer = 0.99,point_est="mean",pars=c("p[1]","p[2]","p[3]","p[4]","p[5]","p[6]","p[7]"))
+
+#Shinystan
+library(shinystan)
+launch_shinystan(logis_fit)
+```
+<br>
+
+### Bonus: Estimación con map2stan
+
+<br>
+Además de la siempre abstrusa representación del código en RStan, en este último plato incluyo una alternativa que de paso le hace bombo al paquete [rethinking](http://xcelab.net/R/rethinking_package.pdf) que preparó uno de los mejores cocineros: [Richard McElreath](http://xcelab.net/rm/).
+
+La especificación del modelo en el código del paquete rethinking, que traduce a un lenguaje más amable el código de RStan, se ve así:
+<br>
+```{r results = "hide",message=FALSE}
+library(rethinking)
+
+# Modelo logístico en map2stan:
+logis <- map2stan(
+  alist(
+    #modelo
+    id ~ dbinom(n,p),
+    logit(p) <- a[encuestadora],
+    #priors
+    a[encuestadora] ~ dnorm(a,s),
+    a ~ dnorm(50,5),
+    s ~ dcauchy(0,5)
+     ),
+  data=d,
+  control=list(adapt_delta=0.96),
+  iter=4000, warmup=1000, chains=4, cores=2)
+```
+<br>
+
+***
+## Referencias
+<br>
+[Este proyecto](https://pkremp.github.io/report.html) de Pierre-Antoine Kremp, para las presidenciales en EEUU de 2016, fue la inspiración para estas recetas.
+<br>
+<br>
+McElreath, R. (2015). [Statistical Rethinking](http://xcelab.net/rm/statistical-rethinking/). Texts in Statistical Science. Bendito sea Richard McElreath por este texto.
+<br>
+<br>
+Stan Development Team (2016) [Stan Modeling Language: User's Guide and Reference Manual. Version 2.14.0.](https://github.com/stan-dev/stan/releases/download/v2.17.0/stan-reference-2.17.0.pdf)
+<br>
+<br>
+Gelman, A. (2006). [Prior distributions for variance parameters in hierarchical models (comment on article by Browne and Draper)](https://projecteuclid.org/download/pdf_1/euclid.ba/1340371048). Bayesian analysis, 1(3), pp.515-534.
+<br>
+<br>
+Linzer, D. A. (2013). [Dynamic Bayesian forecasting of presidential elections in the states](https://www.ocf.berkeley.edu/~vsheu/Midterm%202%20Project%20Files/Linzer-prespoll-May12.pdf). Journal of the American Statistical Association, 108(501), 124-134.
+<br>
+<br>
+Wickham, H., & Grolemund, G. (2016). [R for data science: import, tidy, transform, visualize, and model data.](http://r4ds.had.co.nz/) O'Reilly Media, Inc.
