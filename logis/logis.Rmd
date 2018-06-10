@@ -17,8 +17,8 @@ Publicación: **10-06-2018**
 options(Encoding="UTF-8")
 knitr::opts_chunk$set(echo = TRUE)
 ```
-> *"The signal is the truth"*<br>
-- [Nate Silver](https://www.amazon.com/Signal-Noise-Many-Predictions-Fail-but/dp/0143125087)
+> *"This self-deceit, this fatal weakness of mankind, is the source of half the disorders of human life"*<br>
+- [Adam Smith](http://www.econlib.org/library/Smith/smMS.html)
 
 <br>
 Llegó la hora de ver si la presidencia de Colombia en 2018 queda en cabeza de [`@IvanDuque`](https://twitter.com/IvanDuque) o [`@GustavoPetro`](https://twitter.com/GustavoPetro). Ya se hizo la tarea para la primera vuelta y [los resultados fueron muy buenos](https://nelsonamayad.github.io/caldo/caldo), a pesar de que no capturaron la sorpresa fajardista que le sacó varios puntos a Petro y a De la Calle en la última semana.
@@ -37,12 +37,13 @@ Este postre recoge la probabilidad de que [`@IvanDuque`](https://twitter.com/Iva
 
 Estas probabilidades salen de sacar muchas simulaciones de cada uno de los parámetros del modelo estimado. El resultado es una densidad de la probabilidad de que Duque obtenga más de 50% de la votación. La distribución parece bimodal porque unas encuestas le dan menos de 50% de la votación a Duque, pero el grueso dice lo contrario: el 20% de las simulaciones estima que Duque gana con más o menos 53% de probabilidad.
 
-> Según el postre [`@IvanDuque`](https://twitter.com/IvanDuque) tiene más o menos 65% de probabilidad de obtener más del 50% de la votación.
+> **[`@IvanDuque`](https://twitter.com/IvanDuque) tiene más o menos 65% de probabilidad de obtener más del 50% de la votación.**
 
 <br>
 ```{r, echo=T, message=FALSE, fig.height=5, fig.width=6, fig.align='center'}
 library(ggplot2)
 library(RCurl)
+
 #Importar simulaciones
 id.4cast <- read.csv(text=getURL("https://raw.githubusercontent.com/nelsonamayad/nelsonamayad.github.io/master/logis/id4cast.csv"))
 
