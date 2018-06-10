@@ -56,7 +56,8 @@ labs(x="Probabilidad de que Duque obtenga más de 50% de la votación",y="Densid
        caption = "Fuente: Cálculos @nelsonamayad")+
   theme(legend.position = "none",
         panel.background = element_blank())+
-  xlim(0.35,0.65)
+  xlim(0.35,0.65)+
+  scale_fill_brewer(palette = "Spectral")
 ```
 
 ### Ingredientes
