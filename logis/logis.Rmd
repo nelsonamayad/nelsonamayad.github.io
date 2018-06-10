@@ -31,13 +31,13 @@ Buen provecho.
 
 ***
 
-## Postre Logis
+## Postre Logístico
 <br>
 Este postre recoge la probabilidad de que [`@IvanDuque`](https://twitter.com/IvanDuque) sea presidente, estimada por el modelo que se describe abajo. 
 
 Estas probabilidades salen de sacar muchas simulaciones de cada uno de los parámetros del modelo estimado. El resultado es una densidad de la probabilidad de que Duque obtenga más de 50% de la votación. La distribución parece bimodal porque unas encuestas le dan menos de 50% de la votación a Duque, pero el grueso dice lo contrario: el 20% de las simulaciones estima que Duque gana con más o menos 53% de probabilidad.
 
-> Según el postre [`@IvanDuque`](https://twitter.com/IvanDuque) tiene más o menos 65% de probabilidad de obtener más del 50% de la votación y ganar las elecciones.
+> Según el postre [`@IvanDuque`](https://twitter.com/IvanDuque) tiene más o menos 65% de probabilidad de obtener más del 50% de la votación.
 
 <br>
 ```{r, echo=T, message=FALSE, fig.height=5, fig.width=6, fig.align='center'}
