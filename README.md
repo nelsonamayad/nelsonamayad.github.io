@@ -12,4 +12,4 @@
 
 6. [_**Caldo post electoral**_](https://nelsonamayad.github.io/caldo/caldo): Comparación entre los pronósticos y los resultados a la primera vuelta. Ganadores: las encuestas y los platos propios.
 
-7. [_**Plato logístico**_](https://nelsonamayad.github.io/logis/logis): Un intento por hacer un pronóstico probabilístico para la segunda vuelta usando un modelo binomial. Preparado con [Stan](http://mc-stan.org/users/interfaces/rstan.html) y [map2stan](https://www.rdocumentation.org/packages/rethinking/versions/1.59/topics/map2stan).
+7. [_**Postre logístico**_](https://nelsonamayad.github.io/logis/logis): Un intento por hacer un pronóstico probabilístico para la segunda vuelta usando un modelo binomial. Preparado con [Stan](http://mc-stan.org/users/interfaces/rstan.html) y [map2stan](https://www.rdocumentation.org/packages/rethinking/versions/1.59/topics/map2stan).
