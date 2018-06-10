@@ -11,3 +11,5 @@
 5. [_**Calentao**_](https://nelsonamayad.github.io/calentao/calentao): Este es un plato con todos los pronósticos, promedios y modelos que encontré y que se publicaron antes de la primera vuelta. Incluye los resultados de los platos Simple y Mixto, los pronósticos de Cifras y Conceptos, ANIF, El País y un promedio entre las encuestas como referencia.
 
 6. [_**Caldo post electoral**_](https://nelsonamayad.github.io/caldo/caldo): Comparación entre los pronósticos y los resultados a la primera vuelta. Ganadores: las encuestas y los platos propios.
+
+7. [_**Plato logístico**_](https://nelsonamayad.github.io/logis/logis): Un intento por hacer un pronóstico probabilístico para la segunda vuelta usando un modelo binomial. Preparado con [Stan](http://mc-stan.org/users/interfaces/rstan.html) y [map2stan](https://www.rdocumentation.org/packages/rethinking/versions/1.59/topics/map2stan).
