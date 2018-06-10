@@ -36,6 +36,9 @@ Buen provecho.
 Este plato recoge la probabilidad de que [`@IvanDuque`](https://twitter.com/IvanDuque) sea presidente, estimada por el modelo que se describe abajo. 
 
 Estas probabilidades salen de sacar muchas simulaciones de cada uno de los parámetros del modelo estimado. El resultado es una densidad de la probabilidad de que Duque obtenga más de 50% de la votación. La distribución parece bimodal porque unas encuestas le dan menos de 50% de la votación a Duque, pero el grueso dice lo contrario: el 20% de las simulaciones estima que Duque gana con más o menos 53% de probabilidad.
+
+> Según este plato logístico [`@IvanDuque`](https://twitter.com/IvanDuque) tiene más o menos 65% de probabilidad de obtener más del 50% de la votación y ganar las elecciones.
+
 <br>
 ```{r, echo=T, message=FALSE, fig.height=5, fig.width=6, fig.align='center'}
 library(ggplot2)
@@ -46,6 +49,7 @@ id.4cast <- read.csv(text=getURL("https://raw.githubusercontent.com/nelsonamayad
 #plato logis
 ggplot(id.4cast)+
   geom_density(aes(x=id4cast,fill="orangered3",color="grey60"))+
+  geom_vline(xintercept=0.5,linetype="dotted")+
 labs(x="Probabilidad de que Duque obtenga más de 50% de la votación",y="Densidad Probabilidades estimadas",
        title="Plato logístico", 
        subtitle="10.000 simulaciones del modelo logístico para la 2da vuelta", 
