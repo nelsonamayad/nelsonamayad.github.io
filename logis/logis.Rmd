@@ -1,6 +1,6 @@
 ---
 title: "Plato, cocina, receta, ingredientes #5"
-subtitle: "Plato logístico para la 2da vuelta"
+subtitle: "Postre logístico para la 2da vuelta"
 author: "Nelson Amaya"
 output: 
   html_document:
@@ -23,7 +23,7 @@ knitr::opts_chunk$set(echo = TRUE)
 <br>
 Llegó la hora de ver si la presidencia de Colombia en 2018 queda en cabeza de [`@IvanDuque`](https://twitter.com/IvanDuque) o [`@GustavoPetro`](https://twitter.com/GustavoPetro). Ya se hizo la tarea para la primera vuelta y [los resultados fueron muy buenos](https://nelsonamayad.github.io/caldo/caldo), a pesar de que no capturaron la sorpresa fajardista que le sacó varios puntos a Petro y a De la Calle en la última semana.
 
-Este último plato busca lograr lo que los anteriores no pudieron: estimar qué tan probable es que gane uno u otro candidato. Para hacer eso este plato le aplica una transformación sencillita al plato [Simple](https://nelsonamayad.github.io/mixto/mixto): en vez de servir dos recetas por candidato, se sirve una sola [logística](https://en.wikipedia.org/wiki/Logistic_regression) para ambos. Esto permite generar un pronóstico probabilístico para la segunda vuelta.
+Este postre busca lograr lo que los anteriores no pudieron: estimar qué tan probable es que gane uno u otro candidato. Para hacer eso el postre le aplica una transformación sencillita al plato [Simple](https://nelsonamayad.github.io/mixto/mixto): en vez de servir dos recetas por candidato, se sirve una sola [logística](https://en.wikipedia.org/wiki/Logistic_regression) para ambos. Esto permite generar un pronóstico probabilístico para la segunda vuelta.
 
 ¿Por qué hacerlo así? Porque según las encuestas la victoria es para Duque: todas coinciden en que el candidato de la coalición de derecha obtiene una mayor proporción de votos que su contrincante. Es más, el resultado del [plato mixto](https://nelsonamayad.github.io/mixto/mixto), al que mejor le fue en la primera vuelta, aplicado a las encuestas que salieron después del 27 de mayo da como resultado que **Duque obtendrá 51% de la votación, con un rango intervalo HPD de 95% de entre 46% y 57%, y Petro obtendría 37%, con un rango HPD de 95% entre 34% y 41%**. Así que en vez de decir lo obvio, nos vamos por lo menos evidente, aunque sea más difícil de masticar.
 
@@ -31,13 +31,13 @@ Buen provecho.
 
 ***
 
-## Plato Logis
+## Postre Logis
 <br>
-Este plato recoge la probabilidad de que [`@IvanDuque`](https://twitter.com/IvanDuque) sea presidente, estimada por el modelo que se describe abajo. 
+Este postre recoge la probabilidad de que [`@IvanDuque`](https://twitter.com/IvanDuque) sea presidente, estimada por el modelo que se describe abajo. 
 
 Estas probabilidades salen de sacar muchas simulaciones de cada uno de los parámetros del modelo estimado. El resultado es una densidad de la probabilidad de que Duque obtenga más de 50% de la votación. La distribución parece bimodal porque unas encuestas le dan menos de 50% de la votación a Duque, pero el grueso dice lo contrario: el 20% de las simulaciones estima que Duque gana con más o menos 53% de probabilidad.
 
-> Según este plato logístico [`@IvanDuque`](https://twitter.com/IvanDuque) tiene más o menos 65% de probabilidad de obtener más del 50% de la votación y ganar las elecciones.
+> Según el postre [`@IvanDuque`](https://twitter.com/IvanDuque) tiene más o menos 65% de probabilidad de obtener más del 50% de la votación y ganar las elecciones.
 
 <br>
 ```{r, echo=T, message=FALSE, fig.height=5, fig.width=6, fig.align='center'}
@@ -46,12 +46,12 @@ library(RCurl)
 #Importar simulaciones
 id.4cast <- read.csv(text=getURL("https://raw.githubusercontent.com/nelsonamayad/nelsonamayad.github.io/master/logis/id4cast.csv"))
 
-#plato logis
+#postre logis
 ggplot(id.4cast)+
   geom_density(aes(x=id4cast,fill="orangered3",color="grey60"))+
   geom_vline(xintercept=0.5,linetype="dotted")+
 labs(x="Probabilidad de que Duque obtenga más de 50% de la votación",y="Densidad Probabilidades estimadas",
-       title="Plato logístico", 
+       title="Postre logístico", 
        subtitle="10.000 simulaciones del modelo logístico para la 2da vuelta", 
        caption = "Fuente: Cálculos @nelsonamayad")+
   theme(legend.position = "none",
@@ -84,7 +84,7 @@ d$encuestadora <- match(d$encuestadora, unique(d$encuestadora))
 
 ### Receta
 <br>
-Este plato modela directamente las encuestas como una distribución binomial donde cada encuesta es un ensayo:
+Este postre modela directamente las encuestas como una distribución binomial donde cada encuesta es un ensayo:
 
 $$ N^{Duque}_i \sim \textrm{Binomial}(N_i, \pi^{Duque}_i) $$
 donde $N_i$ es la muestra de cada encuesta y $\pi^{Duque}_i$ es la proporción de la intención de voto para Iván Duque.
@@ -96,7 +96,7 @@ $$\textrm{logit} (\pi^{Duque}_i) = \alpha_{encuestadora}$$
 
 ## Preparación
 <br>
-Este es el plato completo, con los *priors* del caso:
+Este es el postre completo, con los *priors* del caso:
 <br>
 $$ N^{Duque}_i \sim \textrm{Binomial}(N_i, \pi^{Duque}_i) $$
 $$\textrm{logit} (\pi^{Duque}_i) = \alpha_{encuestadora}$$
@@ -142,7 +142,7 @@ generated quantities{
 }
 ```
 <br>
-Ahora meter el plato al horno de RStan:
+Ahora meter el postre al horno de RStan:
 <br>
 ```{r results = "hide",message=FALSE}
 library(rstan)
@@ -150,7 +150,7 @@ options(mc.cores = parallel::detectCores())
 logis_fit <- stan(file='logis.stan',data=list(N=7,N_encuestadora=6,n=d$n,encuestadora=d$encuestadora,id=d$id),control=list(adapt_delta=0.95),iter=4000,chains=4)
 ```
 <br>
-Con algo de trabajo, y a pesar de muchas divergencias iniciales en el muestreo, el plato no se quema y sale del horno. 
+Con algo de trabajo, y a pesar de muchas divergencias iniciales en el muestreo, el postre no se quema y sale del horno. 
 
 Veámos cómo se comparan los parametros estimados con los datos observados:
 <br>
@@ -201,7 +201,7 @@ launch_shinystan(logis_fit)
 ### Bonus: Estimación con map2stan
 
 <br>
-Además de la siempre abstrusa representación del código en RStan, en este último plato incluyo una alternativa que de paso le hace bombo al paquete [rethinking](http://xcelab.net/R/rethinking_package.pdf) que preparó uno de los mejores cocineros: [Richard McElreath](http://xcelab.net/rm/).
+Además de la siempre abstrusa representación del código en RStan, en este postre incluyo una alternativa que de paso le hace bombo al paquete [rethinking](http://xcelab.net/R/rethinking_package.pdf) que preparó uno de los mejores cocineros: [Richard McElreath](http://xcelab.net/rm/).
 
 La especificación del modelo en el código del paquete rethinking, que traduce a un lenguaje más amable el código de RStan, se ve así:
 <br>
