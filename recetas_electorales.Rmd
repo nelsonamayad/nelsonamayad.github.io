@@ -92,7 +92,7 @@ ggplot(df2,aes(x=fecha, y=int_voto)) +
 ## El menú:
 <br>
 
-1. [_**Entrada - Bogotá**_](https://nelsonamayad.shinyapps.io/elecciones_locales_2019): aplicación para ver las tendencias en la intención de voto para cada candidato de las elecciones de 3 [principales ciudades según todas las encuestas públicamente disponibles. Preparada con [Shinyapps](https://www.shinyapps.io/).
+1. [_**Entrada - Locales 2019**_](https://nelsonamayad.shinyapps.io/elecciones_locales_2019): aplicación para ver las tendencias en la intención de voto para cada candidato de las elecciones de 3 [principales ciudades según todas las encuestas públicamente disponibles. Preparada con [Shinyapps](https://www.shinyapps.io/).
 
 1. [_**Entrada - Presidenciales 2018**_](https://nelsonamayad.shinyapps.io/col2018_tend/): aplicación para ver las tendencias en la intención de voto para cada candidato según todas las encuestas públicamente disponibles. Preparada con [Shinyapps](https://www.shinyapps.io/).
 
