@@ -1,3 +1,7 @@
+# COVID-19
+
+[_**Shiny App**_]() para seguir la trayectoria del virus.
+
 # Recetas electorales
 
 [_**Entrada - Locales 2019**_](https://nelsonamayad.shinyapps.io/locales_2019): aplicación para ver las tendencias en la intención de voto para cada candidato de las elecciones de 3 principales ciudades según todas las encuestas públicamente disponibles. Preparada con [Shinyapps](https://www.shinyapps.io/).
