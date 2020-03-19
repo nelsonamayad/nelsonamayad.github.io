@@ -1,6 +1,6 @@
 # COVID-19
 
-1. [_**Shiny App**_]() para seguir la trayectoria del virus.
+[_**Shiny App**_]() para seguir la trayectoria del virus.
 
 # Recetas electorales
 
