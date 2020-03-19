@@ -1,11 +1,14 @@
 # Packages ####
+library(rworldmap)
 library(leaflet)
 library(leaflet.providers)
+library(sp)
 library(tidyverse)
 library(lubridate)
 library(shiny)
 library(shinythemes)
 library(RColorBrewer)
+library(plotly)
 
 # Data ####
 df <- list(length(3))
@@ -28,7 +31,7 @@ ui <- fluidPage(
   sidebarPanel(
     hr("This test Shiny App to visualizes the latest international data on the spread of the Coronavirus. \nIt uses the latest updates from the", 
        a(href="https://coronavirus.jhu.edu/","Johns Hopkins Coronavirus Resource Center"),"data uploaded in Github. 
-       It's work in progress, so please excuse any errors."),  
+       It's work in progress, created for pedagogical purposes only, so please excuse any errors."),  
     br(),
     br(),
     actionButton("update","Load latest data", icon = icon("refresh")),
@@ -47,6 +50,7 @@ ui <- fluidPage(
   mainPanel(
     tabsetPanel(type = "tabs",
                 tabPanel("Map",leafletOutput("map")),
+                tabPanel("All countries", plotOutput("all")),
                 tabPanel("By country", plotOutput("plot"))
                                   )
     )
@@ -98,6 +102,25 @@ server <- function(input,output) {
                        label= ~paste0(input$country,": ",total))
   })
   
+  output$all <- renderPlot({
+    
+    data() %>%
+      filter(type==input$type,
+             !is.na(cases), cases!=0) %>%
+      group_by(country,date) %>%
+      mutate(total = sum(cases)) %>%
+      distinct(country, .keep_all=T) %>%
+      group_by(country) %>%
+      ggplot(aes(x=date, y=total, color=country))+
+      geom_line(show.legend = F)+
+      labs(x=NULL,y=paste0("Registered cases: ",input$type),
+           title=paste0("Progression in all countries: ",input$type),
+           caption = "Source: Johns Hopkins Coronavirus Resource Center \nhttps://coronavirus.jhu.edu/")+
+      scale_fill_distiller(direction=1)+
+      theme_classic()+
+      theme(panel.background = element_rect(fill="gray85"))
+  })
+  
   output$plot <- renderPlot({
     
     data() %>%
@@ -113,7 +136,7 @@ server <- function(input,output) {
       geom_smooth(method="lm",se=F, color="turquoise3", fill="turquoise1",linetype="twodash",show.legend = F)+
       labs(x=NULL,y=paste0("Log of registered cases: ",input$type),
            title=paste0("Progression in ",input$country),
-           subtitle="Blue dotted line = Exponential trend",
+           subtitle="Blue dotted line: Exponential trend  (coefficient = 1)",
            caption = "Source: Johns Hopkins Coronavirus Resource Center \nhttps://coronavirus.jhu.edu/")+
       scale_y_log10()+
       scale_fill_distiller(direction=1)+
