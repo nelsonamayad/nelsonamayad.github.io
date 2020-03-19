@@ -41,7 +41,7 @@ ui <- fluidPage(
               max=max(df$date), 
               value=max(df$date)),
     br(),
-    selectInput("country","Select country:",choices=unique(df$country),selected="France"),
+    selectInput("country","Select country:",choices = sort(unique(df$country)),selected="France"),
     br()
   ),
   mainPanel(
