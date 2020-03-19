@@ -31,7 +31,7 @@ ui <- fluidPage(
   sidebarPanel(
     hr("This test Shiny App to visualizes the latest international data on the spread of the Coronavirus. \nIt uses the latest updates from the", 
        a(href="https://coronavirus.jhu.edu/","Johns Hopkins Coronavirus Resource Center"),"data uploaded in Github. 
-       It's work in progress, created for pedagogical purposes (OECD R4Dev workshop), so please excuse any errors."),  
+       It's work in progress, created for pedagogical purposes, so please excuse any errors."),  
     br(),
     br(),
     actionButton("update","Load latest data", icon = icon("refresh")),
