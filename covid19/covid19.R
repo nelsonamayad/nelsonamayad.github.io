@@ -31,7 +31,7 @@ ui <- fluidPage(
   sidebarPanel(
     hr("This test Shiny App to visualizes the latest international data on the spread of the Coronavirus. \nIt uses the latest updates from the", 
        a(href="https://coronavirus.jhu.edu/","Johns Hopkins Coronavirus Resource Center"),"data uploaded in Github. 
-       It's work in progress, created for pedagogical purposes only, so please excuse any errors."),  
+       It's work in progress, created for pedagogical purposes (OECD R4Dev workshop), so please excuse any errors."),  
     br(),
     br(),
     actionButton("update","Load latest data", icon = icon("refresh")),
@@ -50,7 +50,7 @@ ui <- fluidPage(
   mainPanel(
     tabsetPanel(type = "tabs",
                 tabPanel("Map",leafletOutput("map")),
-                tabPanel("All countries", plotOutput("all")),
+                tabPanel("All countries", plotlyOutput("all")),
                 tabPanel("By country", plotOutput("plot"))
                                   )
     )
@@ -102,9 +102,9 @@ server <- function(input,output) {
                        label= ~paste0(input$country,": ",total))
   })
   
-  output$all <- renderPlot({
+  output$all <- renderPlotly({
     
-    data() %>%
+    p <- data() %>%
       filter(type==input$type,
              !is.na(cases), cases!=0) %>%
       group_by(country,date) %>%
@@ -116,9 +116,13 @@ server <- function(input,output) {
       labs(x=NULL,y=paste0("Registered cases: ",input$type),
            title=paste0("Progression in all countries: ",input$type),
            caption = "Source: Johns Hopkins Coronavirus Resource Center \nhttps://coronavirus.jhu.edu/")+
-      scale_fill_distiller(direction=1)+
-      theme_classic()+
-      theme(panel.background = element_rect(fill="gray85"))
+      scale_fill_distiller(direction=1) #+
+      #theme_classic()+
+      theme(panel.background = element_rect(fill="gray85"),
+            legend.position='none')
+    
+    ggplotly(p)
+    
   })
   
   output$plot <- renderPlot({
