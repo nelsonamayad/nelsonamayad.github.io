@@ -1,6 +1,6 @@
 # COVID-19
 
-[_**Shiny App**_]() para seguir la trayectoria del virus.
+[_**Shiny App**_](https://nelsonamayad.shinyapps.io/COVID19/) para seguir la trayectoria del virus.
 
 # Recetas electorales
 
