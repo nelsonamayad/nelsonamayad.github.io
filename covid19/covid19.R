@@ -3,17 +3,35 @@ library(rworldmap)
 library(leaflet)
 library(leaflet.providers)
 library(sp)
-library(tidyverse)
 library(lubridate)
 library(shiny)
 library(shinythemes)
 library(RColorBrewer)
+library(raster)
+library(rgeos)
+library(tidyverse)
 library(plotly)
 
-# Data ####
+# Centroids ####
+wmap <- getMap(resolution="high") 
+centroids <- gCentroid(wmap, byid=TRUE) %>% 
+  as.data.frame() %>%
+  rownames_to_column("country") %>%
+  rename("long"=x,"lat"=y) %>%
+  mutate(country=if_else(str_detect(country,"United States of America"),"US",country),
+         country=if_else(str_detect(country,"Timor"),"Timor-Leste",country),
+         country=if_else(str_detect(country,"Bahamas"),"Bahamas",country),
+         country=if_else(str_detect(country,"Ivory"),"Cote d'Ivoire",country),
+         country=if_else(str_detect(country,"Czech"),"Czechia",country),
+         country=if_else(str_detect(country,"South Korea"),"Korea, South",country),
+         country=if_else(str_detect(country,"Republic of Serbia"),"Serbia",country),
+         country=if_else(str_detect(country,"Taiwan"),"Taiwan*",country)
+  ) 
+
+# Data - Adjustment on 25/03/2020 for different reporting from source ####
 df <- list(length(3))
-for (i in c("Confirmed","Recovered","Deaths")) {
-  df[[i]] <- read_csv(paste0("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-",i,".csv")) %>% 
+for (i in c("confirmed","deaths")) {
+  df[[i]] <- read_csv(paste0("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_",i,"_global.csv")) %>% 
     mutate(type=i)
 }
 df[[1]] <- NULL
@@ -22,7 +40,20 @@ df <- map_df(df,bind_rows) %>%
   mutate(date = mdy(date),
          country=case_when(str_detect(`Country/Region`,"China") ~ "China",
                            str_detect(`Country/Region`,"Australia") ~ "Australia",
-                           !str_detect(`Country/Region`,"China") & !str_detect(`Country/Region`,"Australia") ~ `Country/Region`)) 
+                           !str_detect(`Country/Region`,"China") & !str_detect(`Country/Region`,"Australia") ~ `Country/Region`)) %>%
+  left_join(centroids,by="country") %>%
+  select(-Lat,-Long)
+
+
+# Colombia ####
+col <- getData('GADM', country="COL", level=2) %>%
+  fortify(region = "NAME_2") %>%
+  right_join(read_csv("https://raw.githubusercontent.com/nelsonamayad/nelsonamayad.github.io/master/covid19/covid19_col_19032020.csv") %>%
+               mutate(fecha = dmy(fecha),
+                      ciudad = if_else(str_detect(ciudad,"Bog"),"Santafé de Bogotá",ciudad)) %>%
+               group_by(ciudad,fecha) %>%
+               count(id), by=c("id"="ciudad")) %>% 
+  filter(!is.na(n))
 
 # UI ####
 ui <- fluidPage(
@@ -31,8 +62,10 @@ ui <- fluidPage(
   sidebarPanel(
     hr("This test Shiny App to visualizes the latest international data on the spread of the Coronavirus. \nIt uses the latest updates from the", 
        a(href="https://coronavirus.jhu.edu/","Johns Hopkins Coronavirus Resource Center"),"data uploaded in Github. 
-       It's work in progress, created for pedagogical purposes, so please excuse any errors."),  
+       It's work in progress, created for pedagogical purposes, so please excuse any errors."),
     br(),
+    br(),
+    p(strong("Last update: 27/03/2020")),
     br(),
     actionButton("update","Load latest data", icon = icon("refresh")),
     br(),
@@ -50,20 +83,20 @@ ui <- fluidPage(
   mainPanel(
     tabsetPanel(type = "tabs",
                 tabPanel("Map",leafletOutput("map")),
-                tabPanel("All countries", plotlyOutput("all")),
+                tabPanel("Most affected countries", plotlyOutput("top20")),
                 tabPanel("By country", plotOutput("plot"))
-                                  )
+                
     )
   )
+)
 
 # Server ####
-
 server <- function(input,output) {
   
   data <- eventReactive(input$update,{
     df <- list(length(3))
-    for (i in c("Confirmed","Recovered","Deaths")) {
-      df[[i]] <- read_csv(paste0("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-",i,".csv")) %>% 
+    for (i in c("confirmed","deaths")) {
+      df[[i]] <- read_csv(paste0("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_",i,"_global.csv")) %>% 
         mutate(type=i)
     }
     df[[1]] <- NULL
@@ -72,7 +105,9 @@ server <- function(input,output) {
       mutate(date = mdy(date),
              country=case_when(str_detect(`Country/Region`,"China") ~ "China",
                                str_detect(`Country/Region`,"Australia") ~ "Australia",
-                               !str_detect(`Country/Region`,"China") & !str_detect(`Country/Region`,"Australia") ~ `Country/Region`)) 
+                               !str_detect(`Country/Region`,"China") & !str_detect(`Country/Region`,"Australia") ~ `Country/Region`)) %>%
+      left_join(centroids,by="country") %>%
+      select(-Lat,-Long)
     
   })
   
@@ -84,7 +119,8 @@ server <- function(input,output) {
              !is.na(cases), cases!=0) %>%
       group_by(country, input$type) %>%
       mutate(total = sum(cases)) %>%
-      distinct(country, .keep_all=T) %>%
+      group_by(country) %>%
+      distinct(country, .keep_all=T) %>% # ERROR: Drops coords with countries
       leaflet() %>%
       addTiles() %>%
       addProviderTiles(providers$Hydda.Base) %>%
@@ -102,7 +138,7 @@ server <- function(input,output) {
                        label= ~paste0(input$country,": ",total))
   })
   
-  output$all <- renderPlotly({
+  output$top20 <- renderPlotly({
     
     p <- data() %>%
       filter(type==input$type,
@@ -110,16 +146,17 @@ server <- function(input,output) {
       group_by(country,date) %>%
       mutate(total = sum(cases)) %>%
       distinct(country, .keep_all=T) %>%
-      group_by(country) %>%
+      group_by(total) %>%
+      top_n(20) %>%
       ggplot(aes(x=date, y=total, color=country))+
       geom_line(show.legend = F)+
       labs(x=NULL,y=paste0("Registered cases: ",input$type),
-           title=paste0("Progression in all countries: ",input$type),
+           title=paste0("Progression in 20 most affected countries: ",input$type),
            caption = "Source: Johns Hopkins Coronavirus Resource Center \nhttps://coronavirus.jhu.edu/")+
       scale_fill_distiller(direction=1) #+
-      #theme_classic()+
-      theme(panel.background = element_rect(fill="gray85"),
-            legend.position='none')
+    #theme_classic()+
+    theme(panel.background = element_rect(fill="gray85"),
+          legend.position='none')
     
     ggplotly(p)
     
@@ -148,7 +185,7 @@ server <- function(input,output) {
       theme(panel.background = element_rect(fill="gray75"))
   })
   
-  }
+}
 
 # Run the app ####
 shinyApp(ui,server)
