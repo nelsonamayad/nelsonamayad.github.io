@@ -1,6 +1,6 @@
 # R4DEV
 
-[_**R4DEV**_](https://nelsonamayad.shinyapps.io/r4dev/) cursillo de R en OECD/DEV 2020.
+[_**R4DEV**_](https://nelsonamayad.github.io/r4dev/r4dev) cursillo de R en OECD/DEV 2020.
 
 
 # COVID-19
