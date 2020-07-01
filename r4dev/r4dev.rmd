@@ -3,6 +3,7 @@ title: "R4DEV 2020"
 subtitle: "5 lessons from your internship"
 output: 
   rmdformats::readthedown:
+      self_contained: true
       code_folding: hide
 runtime: shiny
 date: "`r format(Sys.time(), '%d %B %Y')`"
@@ -138,7 +139,7 @@ Instead of starting the animation from the downloaded data, we will take advanta
 
 Let's see how it is built.
 
-```{r, echo = TRUE, warning = FALSE, message=FALSE,fig.align='center'}
+```{r, echo = TRUE, warning = FALSE, message=FALSE}
 #Load library
 library(gganimate)
 library(tidyverse)
@@ -688,22 +689,24 @@ library(shiny)
 library(gapminder)
 library(tidyverse)
 
+# Embedding
+shinyApp(
+
 # Defining the User interface
-ui <- fluidPage(
-  textInput("name","name","Your name"),
-  br(),
-  verbatimTextOutput("name")
-  )
+  ui <- fluidPage(
+    textInput("name","name","Your name"),
+    br(),
+    verbatimTextOutput("name")
+    ),
 
 # Defining the server
-server <- function(input, output) {
-  output$name <- renderText(
-    stringr::str_c(input$name," interned at the OECD Development Centre in 2020.")
-  )
-}
+  server <- function(input, output) {
+    output$name <- renderText(
+      stringr::str_c(input$name," interned at the OECD Development Centre in 2020.")
+    )
+  }
 
-# Running the app with shinyApp command
-shinyApp(ui, server)
+)
 ```
 
 ## Shiny Gapminder
@@ -720,6 +723,9 @@ library(shiny)
 library(gapminder)
 library(tidyverse)
 
+#Embedding
+shinyApp(
+  
 #Define UI
 ui <- fluidPage( #this is the space of a page, and we define what goes where
   theme = shinytheme("united"), #as we did with ggplot2, we can customise the theme of the app
@@ -754,7 +760,7 @@ ui <- fluidPage( #this is the space of a page, and we define what goes where
                 tabPanel("Table", DT::dataTableOutput("table"))
     )
   )
-)
+),
 
 # Now we define out Server function.
 server <- function(input, output) {
@@ -801,8 +807,7 @@ server <- function(input, output) {
     })
 }
 
-# Run app
-shinyApp(ui, server)
+)
 ```
 
 
@@ -936,6 +941,9 @@ library(leaflet.providers)
 library(tidyverse)
 library(plotly)    # Surprise!
 
+# Embedd
+shinyApp(
+  
 # UI ####
 ui <- fluidPage(
   theme = shinytheme("lumen"),
@@ -967,7 +975,7 @@ ui <- fluidPage(
                 tabPanel("Most affected countries", plotlyOutput("top20")))
                
     )
-  )
+  ),
 
 
 # Server ####
@@ -1056,8 +1064,7 @@ server <- function(input,output) {
   })
 }
 
-# Run the app ####
-shinyApp(ui,server)
+)
 ```
 
 ***
