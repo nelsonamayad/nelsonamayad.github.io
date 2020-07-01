@@ -1,6 +1,6 @@
 ---
 title: "R4DEV 2020"
-subtitle: "5 lessons from your OECD internship"
+subtitle: "5 lessons from your internship"
 output: 
   rmdformats::readthedown:
       code_folding: hide
@@ -25,7 +25,7 @@ All code is annotated and you can reproduce it in your computer whenever you wan
 
 Let's get started. Enjoy!
 
-**Having trouble with the file or questions? Reach me at nelson.amaya@oecd.org or nelson.amaya.d@gmail.com**
+**Having trouble with the file or questions? Reach me at nelson.amaya.d@gmail.com**
 
 ```{r, include=FALSE}
 
