@@ -1,0 +1,1099 @@
+---
+title: "R4DEV 2020"
+subtitle: "5 lessons from your internship"
+date: "30 June 2020"
+author: Nelson Amaya
+runtime: shiny
+output:
+  html_document:
+      theme: readable
+      code_folding: hide
+#  rmdformats::readthedown:
+#    self_contained: true
+#    thumbnails: false
+#    lightbox: false
+---
+
+***
+
+# Welcome
+
+Here you can find our sessions of R4Dev -the quick and dirty guide to get you started on analyzing, managing and visualizing data using R, RStudio and RCloud. We will be using the [tidyverse](https://www.tidyverse.org/) packages, which make R a cool experience (base R code is horrible, trust me on that). These packages allow you handle, compile, visualize and analyze data easily. Also download the [RStudio cheetsheets](https://rstudio.com/resources/cheatsheets/) for some packages like **dplyr** and **ggplot2** that will come in handy.
+
+You don't need to download R and RStudio to your computer to work with the programs. You can open an account on [RCloud](https://rstudio.cloud/) and use the cloud version, which has lots of computational power and can be accessed from any browser.
+
+The goal is to get you to not use MS Excel. Why? Because *more fiction is written in Excel than in Word*. Excel does not remember your mistakes, it [automatically formats variables when it shouldn't](https://www.sciencemag.org/news/2016/08/one-five-genetics-papers-contains-errors-thanks-microsoft-excel), and whatever you do in Excel, nobody will be able to verify it afterwards. So for you to move to a modern data workflow, and away from Excel, R is a great place to start.
+
+All code is annotated and you can reproduce it in your computer whenever you want. Each chunk in gray you can run in R and see the results. Click on **"Run document"** to see the complete output or run the chunks of each section in order.
+
+Let's get started. Enjoy!
+
+**Having trouble with the file or questions? Found errors? Reach me at nelson.amaya.d@gmail.com**
+
+```{r setup, include=FALSE}
+
+rm(list=ls())
+
+library(knitr)
+library(rmdformats)
+library(rmarkdown)
+
+knitr::opts_chunk$set(echo=T)
+```
+
+
+***
+
+# Moving plots
+
+> *The greatest value of a picture is when it forces us to notice what we never expected to see*
+>
+> **John Tukey**
+
+
+#### Getting started: R Packages
+
+First part: we need to install packages -which have specific capabilities that we will use. In this session we will use 3 packages:  **WDI** (World Development Indicators from the World Bank), **tidyverse** for easy workflow and **gganimate** which will allow us to build animations from simple plots.
+
+**To install a package, use `install.packages()` command**
+
+With the packages installed, we now load them into R using `library()`
+
+```{r, echo = TRUE, warning = FALSE, results = 'hide', message=FALSE}
+# Install packages if needed using install.packages("WDI","tidyverse","gganimate","gifski")
+
+# Load packages
+library(WDI)
+library(gifski)
+library(gganimate)
+library(tidyverse)
+```
+
+## Loading data to R
+
+Before we bring our data using the WDI command, we need to know the names and codes of the variables we want. We could download all the data but that would take forever (try it, I dare you).
+
+Using `WDIsearch()` command, we can find the code for the variables we want. For example, population by country. We recover the code for the variable so we can use it later.
+
+Now we'll directly download 3 WDI indicators: population, life expectancy and GDP per capita for a few countries and an aggregate for all OECD countries in the database between 1960 and 2018 using the `WDI()` command. We will save them into a data frame (a rectangular format in R) called *progress*.
+
+```{r, echo = TRUE, warning = FALSE, results = 'hide', message=FALSE, cache = TRUE}
+library(WDI)
+library(tidyverse)
+
+# Search for the data we want in the WDI database. We look for separate text using the vertical bar | which means "or" in Rspeak
+WDIsearch("population, total|gdp per capita|life expectancy at birth")
+
+# Indicators and countries using codes for both
+ind <- c('NY.GDP.PCAP.KD','SP.POP.TOTL','SP.DYN.LE00.IN')
+countries <- c("CO","CN","DE","FR","GR","HT","IL","IN","IT","KR","NG","US","GB","OE", "ZA")
+
+# Download and save indicators to R, using the lists we created above
+progress <- WDI(country = countries, # The vector of 15 countries we defined above
+                indicator = ind, # The vector of 3 variables we want and defined above
+                start = 1960, end = 2018, extra = TRUE)
+
+# Have a glimpse
+glimpse(progress)
+```
+
+## A picture is worth a thousand words
+
+With the data saved in R, we will now work with it to transform it first to a plot with [ggplot2](https://ggplot2.tidyverse.org/) and then to an animation using [gganimate](https://github.com/thomasp85/gganimate).
+
+The annotated code to build a simple scatter plot with GDP per capita on the X axis and Life Expectancy on the Y axis. We'll use population as weight for each country. The code below shows how to build the plot.
+
+Notice that we use **the pipe** to build our code sequentially: the **`%>%`** function puts what you write on the left-hand side into what you write on the right-hand side and makes life (and debugging) easier. It also allows us to write many instructions into a single command.
+
+**To call a command from a specific loaded package, use packagename::command()**
+
+To get started let's do a comparison in 2 moments in time: 1960 and 2018.
+
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE}
+
+library(tidyverse)
+
+# Building a plot using the pipe %>%. We start with our saved data
+progress %>%
+  #We rename the indicators for easier quote with the command rename()
+  dplyr::rename("gdppc"="NY.GDP.PCAP.KD", "pop"="SP.POP.TOTL", "lifexp"="SP.DYN.LE00.IN") %>%
+  #We exclude regions and aggregates of countries, which are identifiable as they have a digit in the ISO2C code using
+  dplyr::filter(!str_detect(iso2c,"[:digit:]"), year==1960 | year==2018) %>%
+  #Now plot using ggplot2: we give it the aesthetics aes(), as the data is already in thanks to the pipe %>%
+  ggplot2::ggplot(aes(x=log(gdppc),y=lifexp,size=pop,color=country,fill=country))+
+  #Here we tell ggplot to give us plot of points (the geometry in geom)
+  geom_point(show.legend = FALSE)+
+  #Here we label the axis
+  labs(x="Log GDP per capita",y="Life Expectancy",
+       title="58 years of human progress", subtitle="Source: WDI")+
+  # We used a facet to break the plot in the two years we have filtered
+  facet_wrap(~year)+
+  #We include the theme to simplify the plot
+  theme_classic()
+```
+
+
+Notice than when we enter `ggplot2()` we don't use the pipe **`%>%`** anymore but the **`+`** sign to include options only for the plot, as the data is already in.
+
+
+## A movie as a thousand pictures
+
+Why stop there? We wasted lots of information in looking at the transition of the variables above between 1960 and 2018. Can we do better? Enter **gganimate**.
+
+Starting from the code we used above, we can add just a couple of additional commands to turn the plot into a full-fledged animation. For that we will include `transition_time()` that will use data from each year to build the animation, and a couple other commands that will make the animation smooth.
+
+Instead of starting the animation from the downloaded data, we will take advantage of fast computation to integrate all the process into a single command: from downloading the data from WDI, all the way to the animation.
+
+Let's see how it is built.
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE}
+#Load library
+library(gganimate)
+library(tidyverse)
+
+# Building the animation with a single command using the pipe %>%
+progress_animated <- progress %>%
+  #We rename the indicators for easier quote
+  dplyr::rename("gdppc"="NY.GDP.PCAP.KD", "pop"="SP.POP.TOTL", "lifexp"="SP.DYN.LE00.IN") %>%
+  #We exclude regions and aggregates of countries, which are identifiable as they have a digit in the ISO2C code
+  dplyr::filter(!str_detect(iso2c,"[:digit:]")) %>%
+  #Now we design our plot using ggplot2: we give it the aesthetics (aes), as the data is already in thanks to the pipe %>%
+  ggplot2::ggplot(aes(x=log(gdppc),y=lifexp,size=pop,color=country,fill=country))+
+  #Here we tell ggplot to give us plot
+  geom_point(show.legend = FALSE)+
+  #Here we include the text for the year
+  geom_text(aes(label=year,x=10,y=50), size=10, color="gray70")+
+  #Here we label the axis. Notice the title, which includes the year as it goes along
+  labs(x="Log GDP per capita",y="Life Expectancy",
+       title="Progress in {frame_time}", subtitle="Source: WDI")+
+  theme_classic()+
+  #Here we introduce our animation parameters!
+  gganimate::transition_time(as.integer(year))+
+  gganimate::ease_aes("linear")+
+  gganimate::shadow_mark(color="gray80", size=0.8)
+
+# Let's see the animation using the gganimate and gifski packages
+gganimate::animate(progress_animated, duration = 5, fps = 20, width = 600, height = 400, renderer = gifski_renderer())
+
+```
+
+You can explore additional options for both [ggplot2](https://rstudio.com/resources/cheatsheets/) and [gganimate](https://ugoproto.github.io/ugo_r_doc/pdf/gganimate.pdf) using the cheatsheets available for each package.  
+
+### Test yourself
+
+- Using `geom_text()` include the label of your country in the progress animation.
+
+- Use the code above as a template to replicate this [Hans Rosling animation](https://www.youtube.com/watch?v=hVimVzgtD6w)
+
+- Create an animation of your own with whatever data you find interesting in the WDI database.
+
+
+***
+
+# Mapping despair
+
+> *Drug abuse has become rampant in America and may be the worst the country has ever experienced.*
+>
+> **Angus Deaton & Anne Case**
+
+
+This second session shows how to build maps in R, and will illustrate with one of the most complex phenomena of the past decade: the US opioid epidemic. If you want to understand the epidemic, there are many books available that explain how it came to be.
+
+
+#### Getting ready
+
+As always, we first install the packages we will need for the session. In this case we will use new packages alongside old tools.
+
+```{r, echo = TRUE, warning = FALSE, results = 'hide', message = FALSE}
+# Install packages below if this is the first time you run this code.
+
+# Load packages from CRAN for mapping
+library(RSocrata)      # Socrata API
+library(raster)        # Mapping
+library(rgeos)         # Mapping  
+library(sp)            # Mapping
+library(lubridate)     # Tidyverse to manage dates
+library(RColorBrewer)  # Gives us coloring options
+library(ggthemes)      # Gives us themes for maps
+library(maptools)      # As advertised
+library(leaflet)       # To build interactive maps
+library(tidyverse)     # Our other old friend
+```
+
+
+## Deaths of despair and the opioid epidemic in the US
+
+We first look for data. The Center for Disease Control (CDC) has data on opioid-related deaths, called VSRR Provisional Drug Overdose Death Counts, and can be found in the US [Data.gov](https://www.data.gov/) portal. The data we are looking for is [here](https://data.cdc.gov/NCHS/VSRR-Provisional-Drug-Overdose-Death-Counts/xkb8-kh2a) and by clicking on the **API** button on the upper-right corner, choosing our format, in this case CSV, we can copy the location of the data for easy import to R.
+
+That way we can easily download it to R with **RSocrata** package, using the function `read.socrata()`, and then we keep only the data we want. Better yet, we can quickly plot the data using **ggplot2**.  
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, cache = TRUE, fig.width=8.8}
+
+library(RSocrata)      # Socrata API
+library(tidyverse)     # Our other old friend  
+
+# Get data from CDC portal
+cdc <- "https://data.cdc.gov/resource/xkb8-kh2a.csv"
+
+# Use RSocrata to retrieve the data and filter what we are after
+opioid <- RSocrata::read.socrata(cdc) %>%
+  dplyr::filter(str_detect(indicator,"Drug Overdose Deaths"))
+
+# Glimpse
+glimpse(opioid)
+
+# Plot aggregate data
+opioid %>%
+  dplyr::select(state,state_name,year,month,data_value) %>%
+  # We exclude aggregated data for the whole United States
+  dplyr::filter(state_name!="United States") %>%            
+  dplyr::group_by(state,year) %>%
+  dplyr::summarize(opioid = sum(data_value)) %>%
+  ggplot2::ggplot(aes(x=year,y=opioid,color=state))+
+  geom_line(show.legend = F)+
+  labs(x=NULL,
+       y="Number of Drug Overdose Deaths",
+       title="The opioid crisis in the US: 2015-2019",
+       caption = "Source: CDC")+
+  # We'll facet by state and let the y axis float to see the trajectories during this period
+  facet_wrap(~state, scales = "free_y")+
+  theme_classic()
+```
+
+## The map
+
+With the data by state, we can now map it.
+
+The **`raster`** package help us easily bring to R the coordinates data we need in order to build maps. Using the command `getData()` from the raster package, we will download data by state and then run it into a data frame with `fortify()`. This will make it easier to work, as spatial files often come in formats that are not that easy to work with at the onset.
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE, cache = TRUE}
+library(raster)
+library(sp)
+library(tidyverse)
+
+# Getting coordinates and polygons for the US
+us <- getData('GADM', country="USA", level=2)
+
+# Saving data by state as a data frame
+us_state <- ggplot2::fortify(us, region = "NAME_1")
+```
+
+Now we need only merge the data from the *us_state* data frame and the opioid data we had saved before into a new data framae we call *opioid_map*. For this we use our old friends: the join function and the pipe.
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE, cache = TRUE}
+library(tidyverse)
+
+# Let's first simplify and summarize the opioid data. We'll call the new data frame opioid_map
+opioid_map <- opioid %>%
+  dplyr::select(state_name,year,month,data_value) %>%
+  dplyr::filter(state_name!="United States") %>%            
+  dplyr::group_by(state_name) %>%
+  dplyr::summarize(opioid = sum(data_value)/1000) %>% #Change unit to thousands
+  #This command joins/merges the data on the left onto the data on the right using the variables we provide in by=c(left,right)
+  dplyr::left_join(us_state, by=c("state_name"='id'))
+```
+
+We can now map with **ggplot2** using the `geom_polygon()` option, which will draw the shapes for every state based on the coordinates we downloaded before and are stored in the *us_state* data frame.
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE}
+library(ggthemes)
+library(RColorBrewer)
+library(tidyverse)
+
+  # Now we can map the crisis
+opioid_map %>%
+  #We'll exclude Alaska and Hawaii to get a better looking map
+  dplyr::filter(!state_name %in% c("Alaska","Hawaii")) %>%
+  # We can now include in ggplot: we define the latitude and longitude as x and y axis, group the spaces using group
+  ggplot2::ggplot(aes(x=long,y=lat,group=group,fill=opioid))+
+  #We use polygons!
+  geom_polygon()+
+  #Include a color option that makes a heatmap using the color palette Spectral option
+  scale_fill_distiller(palette="Spectral")+
+  labs(title="Thousands of opioid overdose deaths in the US 2015-2019",
+       subtite="Source: CDC")+
+  #This theme cleans up many features of the map
+  theme_map()
+```
+
+
+## Going interactive with Leaflet
+
+The heatmap above made with **ggplot2** was a very good visualization: it shows the intensity of the crisis in a clear, simple and straightforward way. But we can do better.
+
+**Leaflet** is a great open source tool to build interactive maps. Have a look here on the [basics](https://rstudio.github.io/leaflet/). Leaflet has a different syntax than ggplot, as we add layers over layers using the pipe **`%>%`**  instead of the **`+`** sign.
+
+To build an interactive map with Leaflet we need to first summarize our data by state and then overlay it over a few leaflet options. Below we start by summarizing the data by state, creating a single coordinate for each state so that a single point is laid over the map instead of a region. This is for simplicity, but you can also build a more sophisticated map using [Choropleths](https://rstudio.github.io/leaflet/choropleths.html) which are the `geom_polygon()` version of Leaflet. After that, we just feed the data to the command `leaflet()` that starts the pipe.
+
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE}
+library(leaflet)
+library(leaflet.providers)
+library(tidyverse)
+
+opioid_map %>%
+  # We group by state
+  dplyr::group_by(state_name) %>%
+  # We create a single coordinate at the center of each state, using the median of the coordinates
+  dplyr::mutate(long = median(long),lat=median(lat)) %>%
+  # Now we drop all repeated values
+  dplyr::distinct(state_name, .keep_all = TRUE) %>%
+  # Here we feed the data in the pipe to Leaflet
+  leaflet() %>%
+  # Adding Tiles, which is the structure of the map
+  addTiles() %>%
+  # Add a dark tile, because the topic demands it
+  addProviderTiles(providers$Stamen.Toner) %>%
+  # Set the coordinates to start 
+  setView(lng = -100, lat = 35, zoom = 4) %>%
+  # Add markers that will show the value of deaths for each state
+  addCircleMarkers(radius = ~log(opioid),  # Here we define the size of the circle
+                   color = ~c("red"),      # Here we give it a color
+                   label= ~paste0(state_name,":",opioid)) # And finally we put together the name and deaths for each
+```
+
+
+### Test yourself
+
+- Build a map with data related to your country of origin. Whatever data you want will do, as long as you compare the chosen variables in two moments in time.
+
+- A better measure of the opioid deaths controls for the population size. Can you build the map with the opioid death rate per 100.000 population for each state?
+
+- The data by state is insufficient to understand the impact of the crisis. Look at the map at [DataUSA.io at a county level](https://datausa.io/visualize?enlarged=c-geomap-QuaqK&groups=0-QuaqK&measure=2sUCF4). Can you reproduce this map with the tools above?
+
+***
+
+# Data from words
+
+>  *Does it contain any abstract reasoning concerning quantity or number? No. Does it contain any experimental reasoning concerning matter of fact and existence? No. Commit it then to the flames: for it can contain nothing but sophistry and illusion*
+>
+> **David Hume**
+
+#### Getting started againg: Packages
+
+This third session shows how to do text analysis in R. As always, we first install the packages we will need for the session. In this case we will use new packages alongside old tools.
+
+```{r, echo = TRUE, warning = FALSE, results = 'hide', message=FALSE}
+
+# Load packages to download data from online sources
+library(gutenbergr)        # R package to access the Gutenberg Library
+library(wordcloud)         # Package to build easy wordclouds  
+library(RColorBrewer)      # Color options  
+library(textdata)          # Turning text into data
+library(tidytext)          # Turning text into tidy data
+library(tidyverse)         # Our old friend  
+
+```
+
+## Il Principe as data
+
+We will start by building a visualization of *Niccolo Machiavelli's Il Principe**, to see how you can understand features of a book by extracting and visualizing only parts of it.
+
+In order to do this, we will use the data from the [Gutenberg Project](https://www.gutenberg.org/) -a digitalisation of books that are freely available. They even have their own R package **gutenbergr**, how convenient for us.
+
+We will first import the data from the book and then *tokenize* its content: that is, transform all the text into a database of each of the words within. You'll learn how to do that below.
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE}
+library(gutenbergr)
+
+# Finding Il Principe
+gutenbergr::gutenberg_works() %>% #We take all the Gutenberg library
+  # We filter all books with the text "Machia" to find the one we want using str_detect (string detect)
+  dplyr::filter(str_detect(author,"Machia")) %>%
+  # We display the results of the search
+  dplyr::glimpse()
+```
+
+From the search we find that the gutenber_id of the book we were looking for is the first one, number 1232, and can now import it using the command `gutenberg_download()`.
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE}
+library(gutenbergr)
+
+# Download and save to R Il Principe
+il_principe <- gutenbergr::gutenberg_download(1232)
+
+# Let's see what the book looks like in this format
+glimpse(il_principe)
+```
+
+Every observation in the il_principe is a part of the text, including the title, the author and the paragraphs full of political insights. The variable `text` stores all that information, and it is the one we will use onwards.
+
+### From words to tokens
+
+Now that we have the book downloaded, we can use the **tidytext** package tools to transform the words into data. The plain text format makes word analysis relatively easy.
+
+With the command `unnest_tokens()` we will group all words used stored in the varible `text` and put them in a workable format. This process is called *tokenization* -transforming all text in the book into a database where each row is a single word from the text. This turns the data from the book from 4,666 observations into a database of words with 49.643 rows.
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE}
+library(tidytext)
+library(tidyverse)
+
+#Build a data frame (df) of the words in Il Principe
+il_principe %>%
+  #Tokenisation of words for the variable called text
+  tidytext::unnest_tokens(word, text) %>%
+  # Let's see what the book looks like in this format
+  dplyr::glimpse()
+
+```
+
+By disaggregateing all text we can now do some analysis of the frequency of the words within. The first thing we do is count the frequency that each words appears. We'll use `count()` command to, duh, count the frequency of each word, and then `arrange()` to sort them in decreasing order.
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE}
+library(tidytext)
+library(tidyverse)
+
+#Starting from the tokenized Il Principe
+il_principe %>%
+  tidytext::unnest_tokens(word, text) %>%
+  #Using the command count we, duh, count how many times each word in the text appears
+  dplyr::count(word) %>%
+  #And rearrange it based on the frequency of each word
+  dplyr::arrange(desc(n))
+```
+
+The result is obvious, void of meaning and disappointing. Articles and prepositions for the most part. No substance at all.
+
+Is there a way for us to rid ourselves of those words? Fortunately the **tidytext** package includes **stop words** -a database of all these words so that we can match it to our book and eliminate them from our analysis.
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE}
+library(tidytext)
+library(textdata)
+
+#Save stop words that we want to exclude from the analysis
+stop <- data("stop_words")
+
+#Starting with the tokenized Il Principe
+il_principe %>%
+  tidytext::unnest_tokens(word, text) %>%
+  #Here we use the command anti_join, which excludes all words that are common in our database of Il Principe and the stop words
+  dplyr::anti_join(stop_words) %>%
+  #And repeat the process of counting and sorting
+  dplyr::count(word) %>%
+  dplyr::arrange(desc(n))
+```
+
+Now this makes more sense! With this data we can now visualize the frequency in a better way. Also, note that the key step involved the `anti_join()` function. All join functions from the package **dplyr** are one of the most important tools you'll need to work with data in R, so learn to use them well.
+
+## Wordcloud of politics
+
+Starting from few steps we just did, we can easily include a new one to turn the frequency table of words into a wordcloud using the **wordcloud** package. Using the function `wordcloud()` at the end of our pipe, and some parameters like the number of words and some colors to make the words easier to distinguish, we can visualize the text. Wordclouds are almost always unnecessary and should almost never be used, but let's put some togeter so we can see how to visualise tokens. 
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE, fig.align='center'}
+#Starting with the tokenized Il Principe
+il_principe %>%
+  tidytext::unnest_tokens(word, text) %>%
+  dplyr::anti_join(stop_words) %>%
+  dplyr::count(word) %>%
+  #Build the wordcloud. We use with() to integrate the wordcloud function to the pipe
+  with(wordcloud(word, n, max.words = 100, colors=brewer.pal(8, "Dark2")))
+```
+
+## A wordcloud from any book with a simple function
+
+All the process above can be easily replicated for any book of the Gutenberg library. But instead of repeating every step every time we do it, we can create a simple function that takes some inputs, like the book we want, and spits out some outputs, like the wordcloud or another visualisation of text.
+
+Functions are all of the form `function(inputs)` and we'll now integrate all the steps above into a  function that takes the as input the name of an author and the title of one of his/her books, and produces a wordcloud. We'll call the function **nube**, which is cloud in Spanish, and define it as taking author (a) and title (t) text as inputs and resulting in a wordcloud of the chosen book.
+
+To test the function we will build wordclouds of two books: David Hume's "*An Enquiry Concerning Human Understanding*" and Jane Austen's "*Pride and Prejudice*". For each one we use as input key words from the authors name and the title of the book. Try the function for any book in the Gutenberg Library.
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE, fig.align='center'}
+
+#Building a function to wordcloud books in the Gutenberg library
+nube <- function(a,t){
+ 
+  #Save an object called cloud
+  cloud <- gutenberg_works() %>%
+    #From the Gutenber library, find a book based on text search of author name and title
+    dplyr::filter(str_detect(author,a), str_detect(title,t)) %>%
+    #Keep only the searched book
+    dplyr::select(gutenberg_id) %>%
+    #Download the book in plain text format
+    gutenberg_download() %>%
+    #Tokenize the words
+    tidytext::unnest_tokens(word, text) %>%
+    #Drop stop words
+    dplyr::anti_join(stop_words) %>%
+    #Count remaining words
+    dplyr::count(word) %>%
+    #Build wordcloud
+    with(wordcloud(word, n, max.words = 100, colors=brewer.pal(8, "Dark2")))
+ 
+  #Show the wordcloud
+  print(cloud)
+}
+
+#Using the function
+nube("Hume","Human")
+nube("Austen","Pride")
+```
+
+## Feeling words
+
+Another tool available in text analysis is called *sentiment analysis*, and tries to extrapolate features of the book from the types of words that it uses. We'll use the Afinn sentiment data from the Text Mining textbook, which is a database that ranks the emotional intent of words. Words are either positive or negative along a scale from -5 to +5.
+
+We'll go back to Il Principe and use the tools we have used so far and combine them with a new one. We first download from the **tidytext** package the sentiments, and use two join functions to the code we had before so that we can associate each word to a sentiment, and then aggregate the results using **ggplot2**.
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE}
+library(tidytext)
+library(tidyverse)
+
+# Download word sentiments
+sent <- tidytext::get_sentiments("afinn")
+
+# Visualize the sentiments of Il Principe
+il_principe %>%
+  tidytext::unnest_tokens(word, text) %>%
+  #We drop stop words with anti_join
+  dplyr::anti_join(stop_words) %>%
+  #We integrate the common words with inner_join
+  dplyr::inner_join(sent) %>%
+  dplyr::arrange(desc(value)) %>%
+  dplyr::count(value) %>%
+  #We feed the data into the ggplot
+  ggplot2::ggplot(aes(x=value, y=n,fill=n))+
+  geom_col(show.legend = F)+
+  geom_vline(xintercept = 0, linetype = "dashed")+
+  labs(title="Il Principe - Sentiment Analysis")+
+  theme_classic()+
+  coord_flip()
+```
+
+Seems that the positive and negative words are balanced in frequency throughout the text -expected from a treaty like this.
+
+But what about other books? What if we make a new function that builds this plot for any book in the Gutenberg library -combining what we had before with the new sentiment analysis? Let us do just that and build a function called **sentiments** that takes as inputs the author and title creates a sentiment plot for the book. We just need to add a few pieces to the function **nube**.
+
+We'll test our new function with Oscar Wilde's *The Picture of Dorian Gray*:
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE}
+library(tidytext)
+library(tidyverse)
+
+#Build a function called sentiment that, using an author name and a title, draws a wordcloud
+sentiment <- function(a,t){
+  gutenberg_works() %>%
+    dplyr::filter(str_detect(author,a), str_detect(title,t)) %>%
+    dplyr::select(gutenberg_id) %>%
+    gutenberg_download() %>%
+    tidytext::unnest_tokens(word, text) %>%
+    dplyr::anti_join(stop_words) %>%
+    #Here we include the sentiments for each word
+    dplyr::inner_join(sent) %>%
+    dplyr::arrange(desc(value)) %>%
+    dplyr::count(value) %>%
+    #Now we plot
+    ggplot2::ggplot(aes(x=value,y=n, fill=n))+
+    geom_col(show.legend = F)+
+    geom_vline(xintercept = 0, linetype = "dashed")+
+    annotate("text", x = -0.3, y = 900, angle = 90, label = "italic(Negative)", parse = TRUE)+
+    annotate("text", x = 0.3, y = 900, angle = 90, label = "italic(Positive)",parse = TRUE)+
+    theme_classic()+
+    scale_fill_distiller(palette = "Spectral")+
+    labs(title = "Sentiment Analysis of classical books",
+         subtitle = paste0("Title keyword: ",t,"\n","Author keyword: ",a,"."),
+         caption = "Source: Project Gutenberg",
+         x = "Negative (<0) vs Positive (>0) words",
+         y = "Word type count")
+}
+
+# Using the function for Oscar Wilde's "The Picture of Dorian Gray"
+sentiment("Wilde","Gray")
+
+```
+
+
+### Test yourself
+
+- Choose a book from the Gutenberg library and build a wordcloud from its content.
+
+
+***
+
+# Making data Shiny
+
+> *The credibility of inference decreases with the strength of the assumptions maintained.*
+>
+> **Charles Manski**
+
+This fourth session shows how to build visualisation apps using the [Shiny](https://shiny.rstudio.com/) package -one of R most valuable, versatile and interesting tools. Visit the [Shiny gallery](https://shiny.rstudio.com/gallery/) to see what kinds of tools you can build with this package.
+
+**WARNING**: This session assumes you have been paying attention but it is not so simple, so get comfortable because it's not going to be an easy ride.
+
+#### Getting ready again
+
+We first install and load the packages we will need for the session.
+
+```{r, echo = FALSE, warning = FALSE,message=FALSE}
+# Install packages below if this is the first time you run this code.
+
+# Load packages
+library(shiny)         # Shiny
+library(shinythemes)   # Options for Shiny
+library(DT)            # DataTables package for interactive tables
+library(ggrepel)       # For better assigning text in plots
+library(ggthemes)      # Options for the ggplot2 package
+library(tidyverse)     # Our old friends  
+library(gapminder)     # Gapminder data
+```
+
+## Gapminder
+
+In this session we will return to looking at aggregate data at a country level. This time we will be using the **gapminder** package that makes it easy to bring data from the [Gapminder website](https://www.gapminder.org/) to R.
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE}
+
+#As the Gapminder data is already loaded with the package, we can call it and have a glimpse
+glimpse(gapminder)
+```
+
+The package has data for all countries, every year since 1952 with a frequency of 5 years, and covers population, life expectancy at birth and GDP per capita. Let's make a quick plot to compare all countries on the key variables in two moments in time. We'll highlight the progress of India and China, which is staggering. Notice the extra options we added to `ggplot`, particularly the filtering. The operator `%in%` is used to subset groups: something inside something else.  
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE}
+
+#A quick plot of the Gapminder data
+gapminder %>% # Start with the data
+  #Filter for only first and last years
+  dplyr::filter(year==1952 | year == 2007) %>%
+  #Add the ggplot2 aesthetics: what goes on what axis, and other options
+  ggplot2::ggplot(aes(x=gdpPercap,y=lifeExp,color=continent,size=pop))+
+  #Ask ggplot2 to show points and exclude the legend
+  geom_point(show.legend = FALSE)+
+  #Add text for China and India, filtering the data so it only shows those countries for the text option
+  geom_text_repel(data = gapminder %>%
+                    filter(country %in% c("India","China"), year==1952|year==2007),aes(label=country),color="black",size =3, vjust=-2, hjust=-1, show.legend = FALSE)+
+  #Break the plot in two, one for each year
+  facet_wrap(~year)+
+  # Put GDP per capita in Log scale, given the range of values
+  scale_x_log10()+
+  #Add labels
+  labs(x="Log GDP per capita",
+       y="Life expectancy",
+       title="50 years of human progress",
+       subtitle="Source: Gapminder data")+
+  #Simplify the theme of the plot
+  theme_classic()
+```
+
+## Getting ready to Shiny
+
+Before we get started let's look at some cool Shiny apps:
+
+- [For movie lovers: Movie Explorer](https://shiny.rstudio.com/gallery/movie-explorer.html)
+- [For football fans: Squads](https://allezcannes.shinyapps.io/Soccer_squads/)
+- [For nerds: EGAP apps](http://egap.org/content/apps)
+
+We will make use of 2 new tools: **DT** and **Shiny**. DT allows us to build interactive tables, and Shiny gives us the superpower to build custom applications to navigate our data.
+
+Every Shiny app has two elements: A **User Interface (UI)** and a **Server function (server)**.The UI is how the app looks, and defines the inputs that go into it, while the server defines what the app shows -its outputs. When you put them together, the app runs like a web application and is displayed in the Viewer window or as a HTML file in your default browser.
+
+Let's create a simple app to get started. This app does only one thing: takes a text input, a name, and adds the text "interned at the OECD Development Centre in 2020". Run it and enter your name.
+
+The UI starts with `fluidpage()`, which defines the space where everything will go, and then defines a text input with `textInput`, which requires an id, so we can call it later, a label and a default value. We then add a space, using `br()`, and then include `verbatimTextOutput()`, which will show the output of the app. This way, our User Interface UI has only 2 elements: a text input and a text output.
+
+We then add the server, for which we include the output. Our output will be for the name input we defined in the UI, so we include it as **`output$name`**  and use the `renderText` option, given that this is the type of output we'll get (later on we'll see other output types). Within the render function we use the function `str_c` which concatenates text, and use our **`input$name`**. And finally we use the `shiny()` command where we include our UI and Server.
+
+
+```{r, echo = FALSE, warning = FALSE, message=FALSE, results='hide'}
+
+# Defining the User interface
+ui_name <- fluidPage(
+    textInput("name","name","Your name"),
+    br(),
+    verbatimTextOutput("name")
+    )
+
+# Defining the server
+server_name <- function(input, output) {
+    output$name <- renderText(
+      stringr::str_c(input$name," interned at the OECD Development Centre in 2020.")
+    )
+}
+
+```
+<br>
+```{r, echo = FALSE, warning = FALSE, message=FALSE}
+library(shiny)
+library(gapminder)
+library(ggrepel)
+library(tidyverse)
+
+knitr::include_app("https://nelsonamayad.shinyapps.io/r4dev_name/",height = '200px')
+```
+
+## Shiny Gapminder
+
+With the basic building blocks above, we can now create a better app to understand and navigate the data from Gapminder. The annotated output below shows each step, and looks complex. But it isn't: we just added multiple inputs and multiple outputs, but at heart it is the same as the name app above.
+
+The app has many cool options. You can choose which continent to display and the period of reference. It also displays a plot and table, with multiple tabs, and the table displays the filtered data using the nice interface of the DT package. The app also lets you hover over the plot and click on a point to show the values below.
+
+We also added a download button so that people can download directly the data used in the app. See? Shiny is amazing.
+
+
+```{r, echo = FALSE, warning = FALSE, message=FALSE}
+
+#Define UI
+ui_gap <- fluidPage( #this is the space of a page, and we define what goes where
+  theme = shinytheme("united"), #as we did with ggplot2, we can customise the theme of the app
+  #As a plot, we can define a title for the app
+  titlePanel(title = "Visualizing Gapminder"),
+  #now we break the space of the page by a side and a main panel.
+  #In the side panel we will put out inputs and in our main panel we will display the outcomes
+  sidebarPanel(
+    hr("This is a Shiny app to visualize the Gapminder dataset, which consolidates GDP per capita, life expectancy and population by country since 1952. \nVisit the",
+       a(href="https://www.gapminder.org/","Gapminder"),"website."),
+    br(),  #What is this? Look it up in the Shiny cheat sheet
+    hr("Select the",tags$b("continent and year"),"for which you want the comparisons to be shown."), #notice that we use a tag to bold the text. This is HTML
+    br(),  
+    br(),
+    #The select input gives us a menu of options, which we define from our data. We will use continents
+    checkboxGroupInput("continent","Select one or more continents:",
+                       choices = c("Africa","Americas","Asia","Europe","Oceania")),
+    #Just like select, we can chose numeric inputs, which we'll use for year
+    numericInput("year","Select year:",
+                 min=min(gapminder$year),max=max(gapminder$year),value=1982, step=5),
+    #We can also include a button for the user to download the data
+    downloadButton('download', 'Download Gapminder (.csv)')
+  ),
+  br(),
+  br(),
+  mainPanel(
+    #We can include tabs for display
+    tabsetPanel(type = "tabs",
+                #we define a first tab that will display the plot
+                tabPanel("Plot", plotOutput("plot",click = "click"), verbatimTextOutput("info")),
+                #And another tab for the interactive table
+                tabPanel("Table", DT::dataTableOutput("table"))
+    )
+  )
+)
+
+# Now we define out Server function.
+server_gap <- function(input, output) {
+ 
+  #First we want the app to display a plot of 2 variables based on the inputs: continent and year
+  output$plot <- renderPlot({  
+   
+    gapminder %>%
+      #Notice we include the inputs to the filter. This will tell the plot to include only the data we give in the UI
+      dplyr::filter(continent %in% input$continent, year==input$year) %>%
+      #The rest should be familiar as we've done it before
+      ggplot2::ggplot(aes(x=gdpPercap,y=lifeExp))+
+      geom_point(aes(color=country,size=pop), show.legend = F)+
+      #We add a LOESS line, because we can
+      geom_smooth(method="loess",se=T, color="orangered2")+
+      geom_text_repel(aes(label=country),color="white",size=4, hjust=0.7, vjust=0.5,show.legend = F)+
+      labs(y="Life expectancy at birth",
+           x="(Log) GDP per capita",
+           caption="Source: Gapminder")+
+      scale_x_log10()+
+      theme_dark()
+   
+  })
+ 
+  #Now we define our interactive table using DT package
+  output$table <- DT::renderDataTable({  
+    gapminder %>%
+      #We just filte the data and the render defines the table. Pretty simple, no?
+      dplyr::filter(continent %in% input$continent, year==input$year)
+  })
+ 
+  #Now we we include our interactive plot locator
+  output$info <- renderText({
+    paste0("Log GDP per capita = ", input$click$x, "\nLife expectancy = ", input$click$y) #notice that \n is the command to create a new line of text (enter)
+  })
+ 
+  #Finally let's include the button to download the data
+  output$download <- downloadHandler(
+    filename = function() {
+      paste("gapminder-", Sys.Date(), ".csv", sep="")
+    },
+    content = function(file) {
+      write.csv(g, file)
+    })
+}
+
+```
+<br>
+```{r, echo = FALSE, warning = FALSE, message=FALSE}
+library(shiny)
+library(shinythemes)
+library(gapminder)
+library(tidyverse)
+
+knitr::include_app("https://nelsonamayad.shinyapps.io/r4dev_gap/",height = '600px')
+```
+
+This app doesn't showcase 1% of what Shiny is capable of doing. It is the most powerfull visualization tool in R. In later sessions we will learn to improve the capabilities of a Shiny app, introducing reactivity and modularized rendering. What does that even mean? You'll see soon enough.
+
+
+### Test yourself
+
+- Instead of using the Gapminder data, use the WDI package to download the same variables (GDP per capita, life expectancy and population by country and year) and include that data as input of the app above. What changes?
+
+- Can you change the app so that the X axis in the plot switches from log scale to a liner scale? (*Hint: see `checkboxInput()`*)
+
+#### Cheat for Test Yourself
+
+- In UI: checkboxInput("log","Click to Log GDP per capita",value=T)
+- In server: Include if(input$log==T) {plot} & else {plot without scale_x_log10()}
+
+***
+
+# Application: COVID-19 tracker
+
+> *Even those who aim to change the world had better first learn how to describe it*
+>
+> **Brian Skyrms**
+
+
+I hope you have enjoyed this quick tour. Feel free to use anything for your thesis or your work in the future.
+
+This final lessons will show how to put everything together and build an app to track the progress of COVID-19.
+
+All the best you and thanks for the attention!
+
+
+#### Packages
+
+The usual rundown of the packages we will need:
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE}
+
+# The packages we need  
+library(rworldmap)          # Fast map of the world
+library(leaflet)            # Interactive maps
+library(leaflet.providers)  # Nice outlays for Leaflet
+library(sp)                 # Mapping
+library(lubridate)          # Handling dates
+library(shiny)              # Shiny
+library(shinythemes)        # Shiny looks
+library(RColorBrewer)       # Color options
+library(raster)             # Mapping
+library(rgeos)              # Mapping
+library(plotly)             # Interative plots using plotly
+library(tidyverse)          # Our old friend
+
+```
+
+## Step 1: Get a map of the world
+
+We take a map of the world and create the *centroids* -a function that will give us the coordinates of each country at the center of each one. We do some edits on names of countries, as there are some minor edits we need to do. Learn that no two databases will ever have the same names, so get ready to be frustrated.
+
+
+```{r, echo = FALSE, warning = FALSE, message=FALSE}
+library(rworldmap)
+library(raster)
+library(rgeos)
+library(tidyverse)
+
+# Get map
+wmap <- getMap(resolution="high")
+
+# Build centroids (center of each country)
+centroids <- gCentroid(wmap, byid=TRUE) %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("country") %>%
+  dplyr::rename("long"=x,"lat"=y) %>%
+  dplyr::mutate(country=if_else(str_detect(country,"United States of America"),"US",country),
+         country=if_else(str_detect(country,"Timor"),"Timor-Leste",country),
+         country=if_else(str_detect(country,"Bahamas"),"Bahamas",country),
+         country=if_else(str_detect(country,"Ivory"),"Cote d'Ivoire",country),
+         country=if_else(str_detect(country,"Czech"),"Czechia",country),
+         country=if_else(str_detect(country,"South Korea"),"Korea, South",country),
+         country=if_else(str_detect(country,"Republic of Serbia"),"Serbia",country),
+         country=if_else(str_detect(country,"Taiwan"),"Taiwan*",country)
+  )
+```
+
+## Step 2: Get COVID-19 data
+
+We will use the data from the [Johns Hopkins CSSEGI Github repository](https://github.com/CSSEGISandData/2019-nCoV). We'll first import it using a simple `read_csv()` command given that the data is already formatted. We'll then make some transformations to the data to ready our data frame and do a first plot.
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE}
+library(lubridate)
+library(tidyverse)
+
+# Get the data from Johns Hopkins
+# Step 2.1: Build an empty list to store the data
+df <- list(length(2))
+for (i in c("confirmed","deaths")) {
+  df[[i]] <- read_csv(paste0("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_",i,"_global.csv")) %>%
+    dplyr::mutate(type=i)
+}
+
+# Step 2.2: Drop the first element of the list, which is empty
+df[[1]] <- NULL
+
+# Step 2.3: Putting together the data frame using map
+df <- purrr::map_df(df,bind_rows) %>%
+  tidyr::gather(key="date",value="cases",-`Province/State`,-`Country/Region`,-Lat,-Long,-type) %>%
+  dplyr::mutate(date = mdy(date),
+         country=case_when(str_detect(`Country/Region`,"China") ~ "China",
+                           str_detect(`Country/Region`,"Australia") ~ "Australia",
+                           !str_detect(`Country/Region`,"China") & !str_detect(`Country/Region`,"Australia") ~ `Country/Region`)) %>%
+  dplyr::left_join(centroids,by="country") %>%
+  dplyr::select(-Lat,-Long)
+
+```
+
+## Step 3: Making it Shiny
+
+Now we can build a proper Shiny app!
+
+So, as before, we build the app by writing a UI and a server. This time around we will include an interactive plot using the [**plotly**](https://plotly.com/r/) package and also learning *reactivity* in Shiny, such that parts of the app reach to actions in the **User Interface**.
+
+*Reactivity* is not difficult to understand: you just make something change based on something else. Do this, get that. in this case we make our app react to the click of the button, and that button retrieves the latest data on COVID-19 to load it in the app. This way our app has the latest data. We do this by including an `actionButton()` in the User Interface, and in the server, every time we click it, an event happens: data is retrieved again from the Johns Hopkins GitHub page. We can do this through the `eventReactive()` function, that takes an inputs, such as the click of a button, and runs an operation.
+
+```{r, echo = TRUE, warning = FALSE, message=FALSE}
+
+# UI ####
+ui_covid <- fluidPage(
+  theme = shinytheme("lumen"),
+  titlePanel(p(strong("COVID-19 tracker"))),
+  sidebarPanel(
+    hr("This test Shiny App to visualizes the latest international data on the spread of the Coronavirus. \nIt uses the latest updates from the",
+       a(href="https://coronavirus.jhu.edu/","Johns Hopkins Coronavirus Resource Center"),"data uploaded in Github.
+       It's work in progress, created for pedagogical purposes, so please excuse any errors."),
+    br(),
+    br(),
+    p(strong("Last update: 27/03/2020")),
+    br(),
+    actionButton("update","Load latest data", icon = icon("refresh")),
+    br(),
+    br(),
+    selectInput("type","Select type of case:",choices=unique(df$type)),
+    br(),
+    dateInput("date","Select date:",
+              min=min(df$date),
+              max=max(df$date),
+              value=max(df$date)),
+    br(),
+    selectInput("country","Select country:",choices = sort(unique(df$country)),selected="France"),
+    br()
+  ),
+  mainPanel(
+    tabsetPanel(type = "tabs",
+                tabPanel("Map",leafletOutput("map")),
+                tabPanel("Most affected countries", plotlyOutput("top20")))
+               
+    )
+  )
+
+# Server ####
+server_covid <- function(input,output) {
+
+  # Our reactive data:
+  data <- eventReactive(input$update,{
+    # Creates and emply list where the data will be stored
+    df <- list(length(3))
+   
+    # Using a simple loop, the function goes and retrieves the data and saves it in the list we just created
+    # notice that we could do this for many different websites just extending the list and the links to the data
+    for (i in c("confirmed","deaths")) {
+      df[[i]] <- read_csv(paste0("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_",i,"_global.csv")) %>%
+        dplyr::mutate(type=i)
+    }
+    # Here we drop the first element of the list, which is empty and we don't need
+    df[[1]] <- NULL
+   
+    #Here we use map() from the package purr to integrate the data from the list into a manageable data frame and make some adjustments
+    df <- purrr::map_df(df,bind_rows) %>%
+      tidyr::gather(key="date",value="cases",-`Province/State`,-`Country/Region`,-Lat,-Long,-type) %>%
+      dplyr::mutate(date = mdy(date),
+             country=case_when(str_detect(`Country/Region`,"China") ~ "China",
+                               str_detect(`Country/Region`,"Australia") ~ "Australia",
+                               !str_detect(`Country/Region`,"China") & !str_detect(`Country/Region`,"Australia") ~ `Country/Region`)) %>%
+      dplyr::left_join(centroids,by="country") %>%
+      dplyr::select(-Lat,-Long)
+   
+  })
+ 
+  # Our Leaflet map
+  output$map <- renderLeaflet({
+   
+    data() %>% #See that it starts with the data() we created above? It uses the data that we download with the click of a button!
+      dplyr::filter(type==input$type,
+             date==input$date,
+             !is.na(cases), cases!=0) %>%
+      dplyr::group_by(country, input$type) %>%
+      dplyr::mutate(total = sum(cases)) %>%
+      dplyr::group_by(country) %>%
+      dplyr::distinct(country, .keep_all=T) %>% # ERROR: Drops coords with countries
+      leaflet() %>%
+      addTiles() %>%
+      addProviderTiles(providers$Hydda.Base) %>%
+      addCircleMarkers(radius = ~log(total),
+                       color = ~c("blue"),
+                       label= ~paste0(country,": ",total)) %>%
+      addCircleMarkers(data = data() %>%
+                         dplyr::filter(type==input$type,
+                                date==input$date,
+                                country==input$country) %>%
+                         dplyr::group_by(country, input$type) %>%
+                         dplyr::mutate(total = sum(cases)) %>%
+                         dplyr::distinct(country, .keep_all=T),
+                       color = ~c("red"),
+                       label= ~paste0(input$country,": ",total))
+  })
+ 
+  # Our interactive plot
+ 
+  output$top20 <- renderPlotly({
+   
+    # we build a normal ggplot and save it as the object p
+    p <- data() %>%
+      dplyr::filter(type==input$type,
+             !is.na(cases), cases!=0) %>%
+      dplyr::group_by(country,date) %>%
+      dplyr::mutate(total = sum(cases)) %>%
+      dplyr::distinct(country, .keep_all=T) %>%
+      dplyr::group_by(total) %>%
+      dplyr::top_n(20) %>%
+      ggplot2::ggplot(aes(x=date, y=total, color=country))+
+      geom_line(show.legend = F)+
+      labs(x=NULL,y=paste0("Registered cases: ",input$type),
+           title=paste0("Progression in 20 most affected countries: ",input$type),
+           caption = "Source: Johns Hopkins Coronavirus Resource Center \nhttps://coronavirus.jhu.edu/")+
+      scale_fill_distiller(direction=1) #+
+    #theme_classic()+
+    theme(panel.background = element_rect(fill="gray85"),
+          legend.position='none')
+   
+    #Now wrap the plot in plotly using the function ggplotly to transform to an interactive plot
+    plotly::ggplotly(p)
+   
+  })
+}
+```
+<br>
+```{r, echo = TRUE, warning = FALSE, message=FALSE}
+library(shiny)
+library(shinythemes)
+library(leaflet)
+library(leaflet.providers)
+library(tidyverse)
+library(plotly)
+
+knitr::include_app("https://nelsonamayad.shinyapps.io/r4dev_covid/",height = '600px')
+```
+
+***
+
+# References
+
+Here are some freely accessible references that will help you learn more. In any case, if you get stuck, Googleing the question usually does the trick.
+
+- [R for Data Science](https://r4ds.had.co.nz/)
+- [R Markdown](https://bookdown.org/yihui/rmarkdown/)
+- [World Development Indicators Home](http://wdi.worldbank.org/)
+- [Mastering Shiny](https://mastering-shiny.org/)
+- [Shiny tutorials](https://shiny.rstudio.com/tutorial/)
+- [Johns Hopkins Coronavirus Resource Center](https://coronavirus.jhu.edu/us-map)
+- [Geocomputation with R](https://geocompr.robinlovelace.net/)
+- [DataUSA.io](https://datausa.io/)
+- [Leaflet introduction R](https://rstudio.github.io/leaflet/)
+- [Text Mining with R](https://www.tidytextmining.com/)
+- [Mastering Shiny](https://mastering-shiny.org/)
+- [Shiny tutorials](https://shiny.rstudio.com/tutorial/)
+- [Bookdown](https://bookdown.org/)
