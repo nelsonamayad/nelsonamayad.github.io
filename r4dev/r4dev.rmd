@@ -9,10 +9,6 @@ output:
     theme: readable
     code_folding: hide
     toc: yes
-#  rmdformats::readthedown:
-#    self_contained: true
-#    thumbnails: false
-#    lightbox: false
 ---
 
 ***
